@@ -3,6 +3,7 @@
 import os, subprocess
 import argparse
 import functools
+import tempfile
 import tkinter as tk
 
 from core.images import Image
@@ -41,16 +42,19 @@ def reorg(cols) :
     gal.cols = cols
 
 def click_thumb(event=None) :
+    global tmpdir, tmpidx
+
     for image in event.widget.master.current :
-        tempfile = r'C:\Users\Tulare\AppData\Local\Temp\_out_.png'
-        image.save(tempfile)
-        os.system('PhotoViewer ' + tempfile) 
-##        subprocess.run([
-##            'rundll32.exe',
-##            'C:/Program Files/Windows Photo Viewer/PhotoViewer.dll',
-##            ',',
-##            'ImageView_Fullscreen',
-##            r'C:\Users\Tulare\AppData\Local\Temp\_out_.png'
+        image_path = '{}\\{}_{:03d}.jpg'.format(tmpdir.name, 'out', tmpidx)
+        tmpidx += 1
+        image.save(image_path)
+        os.system('PhotoViewer ' + image_path) 
+##            subprocess.run([
+##                'rundll32.exe',
+##                'C:/Program Files/Windows Photo Viewer/PhotoViewer.dll',
+##                ',',
+##                'ImageView_Fullscreen',
+##                image_path
 ##            ])
 
 UA = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0"
@@ -77,6 +81,9 @@ parser_group.add_argument(
 args = parser.parse_args()
 print(args)
 
+# Temporary directory
+tmpdir = tempfile.TemporaryDirectory()
+tmpidx = 1
 
 # Grab Service
 gs = GrabService()
@@ -99,9 +106,8 @@ gal = GalleryFrame(root, width=1400, height=800 ,bg='darkseagreen')
 gal.pack(fill=tk.BOTH, expand=True)
 gal.cols = 7
 
+# Action on thumbnail click
 root.bind('<<ClickThumb>>', click_thumb)
 
-
+# Application main loop
 root.mainloop()
-
-
