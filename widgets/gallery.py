@@ -32,6 +32,8 @@ class GalleryFrame(tk.Frame) :
 
         self.canvas.tag_bind('thumbnail', '<Button-1>', self._click_event)
         self.canvas.bind('<MouseWheel>', self._mouse_wheel_event)
+        self.canvas.bind('<Button-4>', self._mouse_wheel_event)
+        self.canvas.bind('<Button-5>', self._mouse_wheel_event)
 
     @property
     def entries(self) :
@@ -128,5 +130,8 @@ class GalleryFrame(tk.Frame) :
         self.canvas.event_generate('<<ClickThumb>>', x=event.x, y=event.y)
 
     def _mouse_wheel_event(self, event) :
-        #print('mouse_wheel_event', event)
-        self.canvas.yview('scroll', -1 * event.delta // 120, 'units')
+        if event.num == 5 or event.delta == -120 :
+            units = 1
+        if event.num == 4 or event.delta == 120 :
+            units = -1
+        self.canvas.yview('scroll', units, 'units')
