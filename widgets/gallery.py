@@ -131,7 +131,6 @@ class GalleryFrame(tk.Frame) :
 
     def _mouse_wheel_event(self, event) :
         if event.num == 5 or event.delta == -120 :
-            units = 1
+            self.canvas.yview('scroll', 1, 'units')
         if event.num == 4 or event.delta == 120 :
-            units = -1
-        self.canvas.yview('scroll', units, 'units')
+            self.canvas.yview('scroll', -1, 'units')
