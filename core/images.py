@@ -1,20 +1,37 @@
 # -*- encoding: utf-8 -*-
 
 import re
-import PIL.Image, PIL.ImageTk
+import PIL.Image, PIL.ImageTk, PIL.ImageDraw, PIL.ImageFont
 from io import BytesIO
 
 from helpers.delegation import delegate_as
-from helpers.services import WebRequest
+from helpers.services import WebRequest, ServiceError
 
 @delegate_as(PIL.Image.Image, to='image', include={'size'})
 class Image :
 
     webRequest = WebRequest()
 
-    def __init__(self, source=None, thumbsize=(192,192)) :
+    def __init__(self, source=None, thumbsize=(192, 192)) :
         self.thumbsize = thumbsize
         self._load_source(source)
+
+    def _gen_error(self, message) :
+        self.image = PIL.Image.new('RGB', (1024, 768), color='red')
+        fontError = PIL.ImageFont.truetype('C:/Windows/Fonts/trebuc.ttf', 72)
+        fontMessage = PIL.ImageFont.truetype('C:/Windows/Fonts/trebuc.ttf', 24)
+        draw = PIL.ImageDraw.Draw(self.image)
+        sizeError = draw.textsize('Error', font=fontError)
+        sizeMessage = draw.textsize(message, font=fontMessage) 
+        draw.text(
+            ( (1024 - sizeError[0]) // 2, (768 - sizeError[1])//3 ),
+            'Error', fill='white', font=fontError
+        )
+        draw.text(
+            ( (1024 - sizeMessage[0]) // 2, (768 - sizeMessage[1]) // 2 ),
+            message, fill='yellow', font=fontMessage
+        )
+        
 
     def _load_source(self, source) :
         self._source = source
@@ -30,8 +47,11 @@ class Image :
 
         if isinstance(source, str) :
             if re.match('http.*://', source) :
-                image_bytes = self.webRequest(source).content
-                self.image = PIL.Image.open(BytesIO(image_bytes))
+                try :
+                    image_bytes = self.webRequest(source).content
+                    self.image = PIL.Image.open(BytesIO(image_bytes))
+                except ServiceError as e :
+                    self._gen_error(repr(e))                    
             else :
                 self.image = PIL.Image.open(source)
 

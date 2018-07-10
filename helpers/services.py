@@ -7,6 +7,9 @@ import urllib.parse
 import requests
 
 
+class ServiceError(BaseException) :
+    pass
+
 class Service :
 
     def __init__(self, session=None) :
@@ -35,8 +38,12 @@ class Service :
 class WebRequest(Service) :
 
     def __call__(self, url) :
-        return self.session.get(url)
-
+        try :
+            page = self.session.get(url)
+            page.raise_for_status()
+            return page
+        except requests.exceptions.RequestException as e :
+            raise ServiceError(e)
 
 class GrabService(Service) :
 
@@ -49,15 +56,17 @@ class GrabService(Service) :
         self._tail = '.jpg'
 
     def _grab(self, url) :
-        stream_saved = self.session.stream
-        self.session.stream = True
-        page = self.session.get(url)
-        if not page.ok :
-            print(page.reason)
-            return
-        self.tree = lxml.html.fromstring(page.content)
-        self._url = url
-        self.session.stream = stream_saved
+        try :
+            stream_saved = self.session.stream
+            self.session.stream = True
+            page = self.session.get(url)
+            page.raise_for_status()
+            self.tree = lxml.html.fromstring(page.content)
+            self._url = url
+        except requests.exceptions.RequestException as e :
+            raise ServiceError(e)
+        finally :
+            self.session.stream = stream_saved
 
     def update(self) :
         self._grab(self.url)

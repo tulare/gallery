@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 
 import os, subprocess
@@ -7,7 +8,7 @@ import tempfile
 import tkinter as tk
 
 from core.images import Image
-from helpers.services import GrabService
+from helpers.services import GrabService, ServiceError
 from widgets.gallery import GalleryFrame
 
 def clear() :
@@ -81,14 +82,18 @@ parser_group.add_argument(
 args = parser.parse_args()
 print(args)
 
-# Temporary directory
-tmpdir = tempfile.TemporaryDirectory()
-tmpidx = 1
-
 # Grab Service
 gs = GrabService()
 gs.user_agent = UA
-gs.url = args.url
+try :
+    gs.url = args.url
+except ServiceError as e :
+    print(e)
+    exit()
+
+# Temporary directory
+tmpdir = tempfile.TemporaryDirectory()
+tmpidx = 1
 
 # User Interface
 root = tk.Tk()
