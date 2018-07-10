@@ -46,10 +46,10 @@ def click_thumb(event=None) :
     global tmpdir, tmpidx
 
     for image in event.widget.master.current :
-        image_path = '{}\\{}_{:03d}.jpg'.format(tmpdir.name, 'out', tmpidx)
+        image_path = '{}/{}_{:03d}.jpg'.format(tmpdir.name, 'out', tmpidx)
         tmpidx += 1
         image.save(image_path)
-        os.system('PhotoViewer ' + image_path) 
+        os.system('PhotoViewer ' + image_path.replace('/','\\') ) 
 ##            subprocess.run([
 ##                'rundll32.exe',
 ##                'C:/Program Files/Windows Photo Viewer/PhotoViewer.dll',
