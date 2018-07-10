@@ -18,8 +18,14 @@ class Image :
 
     def _gen_error(self, message) :
         self.image = PIL.Image.new('RGB', (1024, 768), color='red')
-        fontError = PIL.ImageFont.truetype('C:/Windows/Fonts/trebuc.ttf', 72)
-        fontMessage = PIL.ImageFont.truetype('C:/Windows/Fonts/trebuc.ttf', 24)
+
+        try :
+            fontError = PIL.ImageFont.truetype('DejaVuSans', 72)
+            fontMessage = PIL.ImageFont.truetype('DejaVuSans', 24)    
+        except OSError :
+            fontError = PIL.ImageFont.load_default()
+            fontMessage = PIL.ImageFont.load_default()
+        
         draw = PIL.ImageDraw.Draw(self.image)
         sizeError = draw.textsize('Error', font=fontError)
         sizeMessage = draw.textsize(message, font=fontMessage) 
