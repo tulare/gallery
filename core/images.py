@@ -73,14 +73,6 @@ class Image :
         if self._thumbnail is None :
             thumbnail = self.image.copy()
             thumbnail.thumbnail(self.thumbsize)
-            try :
-                font = PIL.ImageFont.truetype('DejaVuSans-Bold', 12)
-            except OSError :
-                font = PIL.ImageFont.load_default()
-            draw = PIL.ImageDraw.Draw(thumbnail)
-            w, h = thumbnail.size
-            draw.text((5,h-20), self.basename, fill='black', font=font)
-            draw.text((6,h-21), self.basename, fill='lime', font=font)
             self._thumbnail = PIL.ImageTk.PhotoImage(thumbnail)
         return self._thumbnail
         

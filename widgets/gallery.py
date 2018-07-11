@@ -11,7 +11,7 @@ class GalleryFrame(tk.Frame) :
         self.images = []
         self._cols = 5
         self.thumbsize = (192, 192)
-        self.slotsize = (self.thumbsize[0] + 8, self.thumbsize[1] + 8)
+        self.slotsize = (self.thumbsize[0] + 8, self.thumbsize[1] + 32)
 
         self.h = tk.Scrollbar(self, orient=tk.HORIZONTAL)
         self.v = tk.Scrollbar(self, orient=tk.VERTICAL)
@@ -66,6 +66,14 @@ class GalleryFrame(tk.Frame) :
         return (self.rows - 1) * self.slotsize[1] + self.slotsize[1] // 2
 
     @property
+    def text_posx(self) :
+        return self.posx
+
+    @property
+    def text_posy(self) :
+        return self.posy + self.slotsize[1] // 2.19
+
+    @property
     def current(self) :
         id_list = self.canvas.find_withtag('current')
         return filter(
@@ -75,7 +83,7 @@ class GalleryFrame(tk.Frame) :
 
     def append(self, source) :
         image = Image(source)
-        self.create_image(image)
+        self._add_entry(image)
 
     def replace(self, indice, source) :
         if indice < self.entries :
@@ -84,7 +92,7 @@ class GalleryFrame(tk.Frame) :
             self.reload(indice)
 
     def clear(self) :
-        self.canvas.delete('thumbnail')
+        self.canvas.delete('all')
         self.images.clear()
 
     def pop(self, indice=None) :
@@ -97,18 +105,6 @@ class GalleryFrame(tk.Frame) :
         self.reorg()
         return image            
         
-    def create_image(self, image) :
-        image.id = self.canvas.create_image(
-            self.posx, self.posy,
-            anchor=tk.CENTER,
-            image=image.thumbnail,
-            tag = 'thumbnail'
-        )
-        self.canvas.config(scrollregion=self.scrollregion)
-        self.images.append(image)
-        self.update()
-        
-
     def reload(self, indice=None) :
         if indice is None :            
             for image in self.images :
@@ -124,7 +120,34 @@ class GalleryFrame(tk.Frame) :
         self.clear()
 
         for image in saved_images :
-            self.create_image(image)            
+            self._add_entry(image)
+
+    def _add_entry(self, image) :
+        image.id = self.canvas.create_image(
+            self.posx, self.posy,
+            anchor=tk.CENTER,
+            image=image.thumbnail,
+            tag = 'thumbnail'
+        )
+        self.canvas.create_text(
+            self.text_posx + 1, self.text_posy + 1,
+            anchor=tk.CENTER,
+            width=self.slotsize[0],
+            text=image.basename,
+            tag='shadow',
+            fill='black'
+        )
+        self.canvas.create_text(
+            self.text_posx, self.text_posy,
+            anchor=tk.CENTER,
+            width=self.slotsize[0],
+            text=image.basename,
+            tag='text',
+            fill='royalblue'
+        )
+        self.canvas.config(scrollregion=self.scrollregion)
+        self.images.append(image)
+        self.update()
 
     def _click_event(self, event) :
         self.canvas.event_generate('<<ClickThumb>>', x=event.x, y=event.y)
