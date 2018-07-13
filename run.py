@@ -10,6 +10,7 @@ import tkinter as tk
 from core.images import Image
 from helpers.services import GrabService, ServiceError
 from widgets.gallery import GalleryFrame
+from widgets.window import ImageWindow
 
 def clear() :
     status.config(text='')
@@ -43,15 +44,16 @@ def reorg(cols) :
     gal.cols = cols
 
 def click_thumb(event=None) :
-    global tmpdir, tmpidx
+    # global preview, tmpdir, tmpidx
 
     for image in event.widget.master.current :
-        image_path = '{}{}{}_{:03d}.jpg'.format(
-            tmpdir.name, os.path.sep, 'out', tmpidx
-        )
-        tmpidx += 1
-        image.save(image_path)
-        os.system('PhotoViewer ' + image_path) 
+        ImageWindow(root, source=image, closeFunc=lambda widget : True)
+##        image_path = '{}{}{}_{:03d}.jpg'.format(
+##            tmpdir.name, os.path.sep, 'out', tmpidx
+##        )
+##        tmpidx += 1
+##        image.save(image_path)
+##        os.system('PhotoViewer ' + image_path) 
 ##            subprocess.run([
 ##                'rundll32.exe',
 ##                'C:/Program Files/Windows Photo Viewer/PhotoViewer.dll',
