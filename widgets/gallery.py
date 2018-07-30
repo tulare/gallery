@@ -1,26 +1,110 @@
 # -*- encoding: utf-8 -*-
 
+# logging
+import logging
+log = logging.getLogger(__name__)
+log.debug('MODULE {}'.format(__name__))
+
+try :
+    import __locator__
+except ImportError :
+    pass
+
+import weakref
 import tkinter as tk
-from core.images import Image
+import tkinter.ttk as ttk
 
-class GalleryFrame(tk.Frame) :
+import core.elements
 
-    def __init__(self, master=None, **kwargs) :
+
+class CanvasImage :
+
+    def __init__(self, canvas, image, x, y, tag) :
+        self._image = None
+        self.id = None
+        
+        self.canvas, self.x, self.y, self.tag = canvas, x, y, tag
+        self.image = image
+
+    @property
+    def image(self) :
+        return self._image
+
+    @image.setter
+    def image(self, image) :
+        log.debug(
+            '{} @IMAGE ID {} NEW {} OLD {}'.format(
+                self.__class__.__name__,
+                self.id,
+                image,
+                self.image
+            )
+        )
+        self._image = image
+
+        self.photo_thumb_ref = weakref.ref(
+            self.image.photo_thumbnail,
+            self.repairPhoto
+        )
+
+        if self.id is None :
+            self.id = self.canvas.create_image(
+                self.x, self.y,
+                anchor=tk.CENTER,
+                image=self.photo_thumb_ref(),
+                tag = self.tag
+            )
+        else :
+            self.canvas.itemconfig(
+                self.id,
+                image=self.photo_thumb_ref()
+            )
+        self.image['id'] = self.id
+        self.image['ref'] = self
+
+    def repairPhoto(self, reference) :
+        log.debug('{} repair REF {} IMAGE {}'.format(
+            self.__class__.__name__,
+            reference,
+            self.image
+            )
+        )        
+        self.photo_thumb_ref = weakref.ref(
+            self.image.photo_thumbnail,
+            self.repairPhoto
+        )
+        self.canvas.itemconfig(
+            self.id,
+            image=self.photo_thumb_ref()
+        )
+        
+    def __del__(self) :
+        log.debug(
+            '{} __DEL__ {}'.format(
+                self.__class__.__name__,
+                self
+            )
+        )
+        
+class GalleryFrame(ttk.Frame) :
+
+    def __init__(self, master=None, thumbsize=(192,192), rows=3, cols=5, **kwargs) :
         super().__init__(master, **kwargs)
 
         self.images = []
-        self._cols = 5
-        self.thumbsize = (192, 192)
+        self._cols = cols
+        self.thumbsize = thumbsize
         self.slotsize = (self.thumbsize[0] + 8, self.thumbsize[1] + 32)
 
-        self.h = tk.Scrollbar(self, orient=tk.HORIZONTAL)
-        self.v = tk.Scrollbar(self, orient=tk.VERTICAL)
+        self.h = ttk.Scrollbar(self, orient=tk.HORIZONTAL)
+        self.v = ttk.Scrollbar(self, orient=tk.VERTICAL)
         self.canvas = tk.Canvas(
             self,
             scrollregion=self.scrollregion,
             yscrollcommand=self.v.set,
             xscrollcommand=self.h.set,
-            **kwargs
+            width=self.slotsize[0] * self._cols,
+            height=self.slotsize[1] * rows
         )
 
         self.h.config(command=self.canvas.xview)
@@ -31,6 +115,7 @@ class GalleryFrame(tk.Frame) :
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)        
 
         self.canvas.tag_bind('thumbnail', '<Button-1>', self._click_event)
+        self.canvas.tag_bind('thumbnail', '<Button-3>', self._right_click_event)
         self.canvas.bind('<MouseWheel>', self._mouse_wheel_event)
         self.canvas.bind('<Button-4>', self._mouse_wheel_event)
         self.canvas.bind('<Button-5>', self._mouse_wheel_event)
@@ -75,21 +160,29 @@ class GalleryFrame(tk.Frame) :
 
     @property
     def current(self) :
-        id_list = self.canvas.find_withtag('current')
+        return self.canvas.find_withtag('current')
+
+
+    def find_withid(self, canvas_id) :
         return filter(
-            lambda i : i.id in id_list,
+            lambda i : i['id'] == canvas_id,
             self.images
         )
 
-    def append(self, source) :
-        image = Image(source)
+    def append(self, source, title=None) :
+        image = core.elements.Image(source, self.thumbsize)
+        log.debug(
+            '{} append IMAGE "{}" {}'.format(
+                self.__class__.__name__,
+                image.basename,
+                image.image,
+            )
+        )
         self._add_entry(image)
 
     def replace(self, indice, source) :
         if indice < self.entries :
-            image = self.images[indice]
-            image.source = source
-            self.reload(indice)
+            self.images[indice].source = source
 
     def clear(self) :
         self.canvas.delete('all')
@@ -109,11 +202,10 @@ class GalleryFrame(tk.Frame) :
         if indice is None :            
             for image in self.images :
                 image.source = image.source
-                self.canvas.itemconfig(image.id, image=image.thumbnail)
                 self.update()
         elif indice < self.entries :
             image = self.images[indice]
-            self.canvas.itemconfig(image.id, image=image.thumbnail)
+            image.source = image.source
 
     def reorg(self) :
         saved_images = self.images.copy()
@@ -123,11 +215,11 @@ class GalleryFrame(tk.Frame) :
             self._add_entry(image)
 
     def _add_entry(self, image) :
-        image.id = self.canvas.create_image(
+        CanvasImage(
+            self.canvas,
+            image,
             self.posx, self.posy,
-            anchor=tk.CENTER,
-            image=image.thumbnail,
-            tag = 'thumbnail'
+            tag='thumbnail',
         )
         self.canvas.create_text(
             self.text_posx + 1, self.text_posy + 1,
@@ -150,10 +242,36 @@ class GalleryFrame(tk.Frame) :
         self.update()
 
     def _click_event(self, event) :
-        self.canvas.event_generate('<<ClickThumb>>', x=event.x, y=event.y)
+        self.canvas.event_generate(
+            '<<ClickThumb>>',
+            x=event.x, y=event.y,
+            state=self.current[0]
+        )
+
+    def _right_click_event(self, event) :
+        self.canvas.event_generate(
+            '<<RightClickThumb>>',
+            x=event.x, y=event.y,
+            state=self.current[0]
+        )
 
     def _mouse_wheel_event(self, event) :
         if event.num == 5 or event.delta == -120 :
             self.canvas.yview('scroll', 1, 'units')
         if event.num == 4 or event.delta == 120 :
             self.canvas.yview('scroll', -1, 'units')
+
+if __name__ == '__main__' :
+    logging.basicConfig(level=logging.DEBUG)
+    
+    root = tk.Tk()
+
+    gal = GalleryFrame(root, rows=3, cols=3)
+    gal.pack(fill=tk.BOTH, expand=True)
+    gal.append(None)
+    gal.append('C:/Users/Public/Pictures/Sample Pictures/Tulips.jpg')
+    gal.append('http://httpbin.org/image/jpeg')
+    gal.append('https://dummyimage.com/1024x768')
+    gal.append('https://dummyimage.com/800x600')
+
+    #root.mainloop()

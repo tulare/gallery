@@ -1,123 +1,180 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 
-import os, subprocess
+# Logging
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logging.info('start logging')
+
 import argparse
 import functools
 import tempfile
-import tkinter as tk
 
-from core.images import Image
+import tkinter as tk
+import tkinter.ttk as ttk
+
+import core.elements
 from helpers.services import GrabService, ServiceError
 from widgets.gallery import GalleryFrame
 from widgets.window import ImageWindow
 
-def clear() :
-    status.config(text='')
-    gal.clear()
-
-def load() :
-    clear()
-    if args.images :
-        status.config(text='work in progress...')
-        for image in gs.images :
-            gal.append(image)
-        status.config(text='images done.')
-    if args.links :
-        status.config(text='work in progress...')
-        for link in gs.links :
-            gal.append(link)
-        status.config(text='links done.')
-
-def update() :
-    status.config(text='work in progress...')
-    gs.update()
-    status.config(text='update done.')
-    load()
-
-def reload() :
-    status.config(text='work in progress...')
-    gal.reload()
-    status.config(text='reload done.')
-
-def reorg(cols) :
-    gal.cols = cols
-
-def click_thumb(event=None) :
-    # global preview, tmpdir, tmpidx
-
-    for image in event.widget.master.current :
-        ImageWindow(root, source=image, closeFunc=lambda widget : True)
-##        image_path = '{}{}{}_{:03d}.jpg'.format(
-##            tmpdir.name, os.path.sep, 'out', tmpidx
-##        )
-##        tmpidx += 1
-##        image.save(image_path)
-##        os.system('PhotoViewer ' + image_path) 
-##            subprocess.run([
-##                'rundll32.exe',
-##                'C:/Program Files/Windows Photo Viewer/PhotoViewer.dll',
-##                ',',
-##                'ImageView_Fullscreen',
-##                image_path
-##            ])
-
 UA = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0"
-Image.webRequest.user_agent = UA
+core.elements.Image.webRequest.user_agent = UA
 
-# Gestion paramètres ligne de commande
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-parser_group = parser.add_mutually_exclusive_group(required=True)
-parser.add_argument(
-    'url',
-    nargs='?',
-    default='https://www.megapixl.com/clipart'
-)
-parser_group.add_argument(
-    '-I', '--images',
-    action='store_true',
-    help='capture embedded images'
-)
-parser_group.add_argument(
-    '-L', '--links',
-    action='store_true',
-    help='capture linked images'
-)
-args = parser.parse_args()
-print(args)
+class Application(tk.Tk) :
 
-# Grab Service
-gs = GrabService()
-gs.user_agent = UA
-try :
-    gs.url = args.url
-except ServiceError as e :
-    print(e)
-    exit()
+    def __init__(self, options, service) :
+        super().__init__()
+        self.options = options
+        self.service = service
+        self.createWidgets()
 
-# Temporary directory
-tmpdir = tempfile.TemporaryDirectory()
-tmpidx = 1
+    def createWidgets(self) :
+        toolbar = ttk.Frame(self)
+        toolbar.pack(fill=tk.X)
+        ttk.Button(
+            toolbar,
+            text='clear', command=self.clear
+        ).pack(
+            side=tk.LEFT
+        )
+        ttk.Button(
+            toolbar,
+            text='load', command=self.load
+        ).pack(
+            side=tk.LEFT
+        )
+        ttk.Button(
+            toolbar,
+            text='update + load', command=self.update
+        ).pack(
+            side=tk.LEFT
+        )
+        ttk.Button(
+            toolbar,
+            text='refresh', command=self.reload
+        ).pack(
+            side=tk.LEFT
+        )
 
-# User Interface
-root = tk.Tk()
-toolbar = tk.Frame(root)
-toolbar.pack(fill=tk.X)
-tk.Button(toolbar, text='clear', command=clear).pack(side=tk.LEFT)
-tk.Button(toolbar, text='load', command=load).pack(side=tk.LEFT)
-tk.Button(toolbar, text='update + load', command=update).pack(side=tk.LEFT)
-tk.Button(toolbar, text='reload', command=reload).pack(side=tk.LEFT)
-tk.Button(toolbar, text='reorg by 4', command=functools.partial(reorg, cols=4)).pack(side=tk.LEFT)
-tk.Button(toolbar, text='reorg by 7', command=functools.partial(reorg, cols=7)).pack(side=tk.LEFT)
-tk.Button(toolbar, text='reorg by 10', command=functools.partial(reorg, cols=10)).pack(side=tk.LEFT)
-status = tk.Label(toolbar, text='')
-status.pack(side=tk.LEFT, fill=tk.X)
-gal = GalleryFrame(root, width=1400, height=800 ,bg='darkseagreen')
-gal.pack(fill=tk.BOTH, expand=True)
-gal.cols = 7
+        self.cols = tk.IntVar()
+        spinBox = tk.Spinbox(
+            toolbar,
+            from_=3, to=8,
+            textvariable=self.cols, command=self.reorg)
+        spinBox.pack(side=tk.LEFT)
+        self.cols.set(5)
 
-# Action on thumbnail click
-root.bind('<<ClickThumb>>', click_thumb)
+        self.status = ttk.Label(toolbar, text='')
+        self.status.pack(side=tk.LEFT, fill=tk.X)
 
-# Application main loop
-root.mainloop()
+        self.gal = GalleryFrame(
+            self,
+            thumbsize=(256, 192),
+            rows=3.5, cols=self.cols.get()
+        )
+        self.gal.pack(fill=tk.BOTH, expand=True)
+
+        # Action on thumbnail click
+        self.bind('<<ClickThumb>>', self.click_thumb)
+        self.bind('<<RightClickThumb>>', self.right_click_thumb)
+                
+    def clear(self) :
+        logging.info('clear')
+        self.status.config(text='')
+        self.gal.clear()
+
+    def load(self) :
+        logging.info('load in progress')
+        self.clear()
+        if self.options.images :
+            logging.info('load images in progress')
+            self.status.config(text='work in progress...')
+            for image in self.service.images :
+                self.gal.append(image)
+            logging.info('load images done')
+            self.status.config(text='images done.')
+        if self.options.links :
+            logging.info('load links in progress')
+            self.status.config(text='work in progress...')
+            for link in self.service.links :
+                self.gal.append(link)
+            logging.info('load links done')
+            self.status.config(text='links done.')
+
+    def update(self) :
+        logging.info('update in progress')
+        self.status.config(text='work in progress...')
+        self.service.update()
+        logging.info('update done')
+        self.status.config(text='update done.')
+        self.load()
+
+    def reload(self) :
+        logging.info('reload in progress')
+        self.status.config(text='work in progress...')
+        self.gal.reload()
+        logging.info('reload done')
+        self.status.config(text='reload done')
+
+    def reorg(self) :
+        self.gal.cols = self.cols.get()
+
+    def click_thumb(self, event=None) :
+        for image in self.gal.find_withid(event.state) :
+            ImageWindow(
+                self, source=image, closeFunc=lambda widget : True
+            ).lift()
+
+    def right_click_thumb(self, event=None) :
+        for image in self.gal.find_withid(event.state) :
+            image.source = image.source
+
+if __name__ == '__main__' :
+
+    # Gestion paramètres ligne de commande
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser_group = parser.add_mutually_exclusive_group(required=False)
+    parser.add_argument(
+        'url',
+        nargs='?',
+        default='https://www.megapixl.com/clipart'
+    )
+    parser_group.add_argument(
+        '-I', '--images',
+        action='store_true',
+        help='capture embedded images'
+    )
+    parser_group.add_argument(
+        '-L', '--links',
+        action='store_true',
+        help='capture linked images'
+    )
+    parser.add_argument(
+        '-X', '--ext',
+        action='append',
+        default=[]
+    )
+    args = parser.parse_args()
+    if not args.links :
+        args.images = True
+    if len(args.ext) == 0 :
+        args.ext = ['jpg', 'jpeg']
+
+    logging.info('args=%r', args)
+
+    # Grab Service
+    logging.info('starting grab service')
+    gs = GrabService()
+    gs.user_agent = UA
+    gs.ext = args.ext
+    try :
+        gs.url = args.url
+    except ServiceError as e :
+        print(e)
+        exit()
+
+    # User Interface and mainloop
+    app = Application(options=args, service=gs)
+    app.geometry('-20+20')
+    app.mainloop()
