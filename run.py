@@ -22,7 +22,7 @@ parser_group = parser.add_mutually_exclusive_group(required=False)
 parser.add_argument(
     'url',
     nargs='?',
-    default='https://www.megapixl.com/clipart',
+    default='https://www.youtube.com/feed/trending',
 )
 parser_group.add_argument(
     '-I', '--images',
@@ -41,7 +41,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '-F', '--format',
-    default='{0}{8}/',
+    default='{7}',
     help='format'
 )
 parser.add_argument(
