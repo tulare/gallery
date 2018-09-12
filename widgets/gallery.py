@@ -1,95 +1,38 @@
 # -*- encoding: utf-8 -*-
+from __future__ import (
+    absolute_import,
+    print_function, division
+)
 
 # logging
 import logging
 log = logging.getLogger(__name__)
 log.debug('MODULE {}'.format(__name__))
 
-try :
-    import __locator__
-except ImportError :
-    pass
+##try :
+##    import __locator__
+##except ImportError :
+##    pass
 
-import weakref
-import tkinter as tk
-import tkinter.ttk as ttk
+import copy
+
+try : # python 3.x
+    import tkinter as tk
+    import tkinter.ttk as ttk
+except ImportError :
+    import Tkinter as tk
+    import ttk
 
 import core.elements
+import widgets.images
 
-
-class CanvasImage :
-
-    def __init__(self, canvas, image, x, y, tag) :
-        self._image = None
-        self.id = None
+# -------------------------------------------------------------------------
         
-        self.canvas, self.x, self.y, self.tag = canvas, x, y, tag
-        self.image = image
+class GalleryFrame(ttk.Frame, object) :
 
-    @property
-    def image(self) :
-        return self._image
-
-    @image.setter
-    def image(self, image) :
-        log.debug(
-            '{} @IMAGE ID {} NEW {} OLD {}'.format(
-                self.__class__.__name__,
-                self.id,
-                image,
-                self.image
-            )
-        )
-        self._image = image
-
-        self.photo_thumb_ref = weakref.ref(
-            self.image.photo_thumbnail,
-            self.repairPhoto
-        )
-
-        if self.id is None :
-            self.id = self.canvas.create_image(
-                self.x, self.y,
-                anchor=tk.CENTER,
-                image=self.photo_thumb_ref(),
-                tag = self.tag
-            )
-        else :
-            self.canvas.itemconfig(
-                self.id,
-                image=self.photo_thumb_ref()
-            )
-        self.image['id'] = self.id
-        self.image['ref'] = self
-
-    def repairPhoto(self, reference) :
-        log.debug('{} repair REF {} IMAGE {}'.format(
-            self.__class__.__name__,
-            reference,
-            self.image
-            )
-        )        
-        self.photo_thumb_ref = weakref.ref(
-            self.image.photo_thumbnail,
-            self.repairPhoto
-        )
-        self.canvas.itemconfig(
-            self.id,
-            image=self.photo_thumb_ref()
-        )
-        
-    def __del__(self) :
-        log.debug(
-            '{} __DEL__ {}'.format(
-                self.__class__.__name__,
-                self
-            )
-        )
-        
-class GalleryFrame(ttk.Frame) :
-
-    def __init__(self, master=None, thumbsize=(192,192), rows=3, cols=5, **kwargs) :
-        super().__init__(master, **kwargs)
+    def __init__(self, master=None,
+                 thumbsize=(192,192), rows=3, cols=5, **kwargs) :
+        super(GalleryFrame, self).__init__(master, **kwargs)
 
         self.images = []
         self._cols = cols
@@ -115,6 +58,7 @@ class GalleryFrame(ttk.Frame) :
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)        
 
         self.canvas.tag_bind('thumbnail', '<Button-1>', self._click_event)
+        self.canvas.tag_bind('thumbnail', '<Button-2>', self._middle_click_event)
         self.canvas.tag_bind('thumbnail', '<Button-3>', self._right_click_event)
         self.canvas.bind('<MouseWheel>', self._mouse_wheel_event)
         self.canvas.bind('<Button-4>', self._mouse_wheel_event)
@@ -170,14 +114,8 @@ class GalleryFrame(ttk.Frame) :
         )
 
     def append(self, source, title=None) :
-        image = core.elements.Image(source, self.thumbsize)
-        log.debug(
-            '{} append IMAGE "{}" {}'.format(
-                self.__class__.__name__,
-                image.basename,
-                image.image,
-            )
-        )
+        image = core.elements.Image(source=source, thumbsize=self.thumbsize)
+        self.debug('APPEND_IMAGE', filename=image.filename, image=image.image)
         self._add_entry(image)
 
     def replace(self, indice, source) :
@@ -186,7 +124,7 @@ class GalleryFrame(ttk.Frame) :
 
     def clear(self) :
         self.canvas.delete('all')
-        self.images.clear()
+        self.images[:] = []
 
     def pop(self, indice=None) :
         if indice is None :
@@ -208,14 +146,15 @@ class GalleryFrame(ttk.Frame) :
             image.source = image.source
 
     def reorg(self) :
-        saved_images = self.images.copy()
+        #saved_images = self.images.copy()
+        saved_images = copy.copy(self.images)
         self.clear()
 
         for image in saved_images :
             self._add_entry(image)
 
     def _add_entry(self, image) :
-        CanvasImage(
+        widgets.images.ImageCanvas(
             self.canvas,
             image,
             self.posx, self.posy,
@@ -248,6 +187,13 @@ class GalleryFrame(ttk.Frame) :
             state=self.current[0]
         )
 
+    def _middle_click_event(self, event) :
+        self.canvas.event_generate(
+            '<<MiddleClickThumb>>',
+            x=event.x, y=event.y,
+            state=self.current[0]
+        )
+
     def _right_click_event(self, event) :
         self.canvas.event_generate(
             '<<RightClickThumb>>',
@@ -261,6 +207,24 @@ class GalleryFrame(ttk.Frame) :
         if event.num == 4 or event.delta == 120 :
             self.canvas.yview('scroll', -1, 'units')
 
+    def debug(self, label, **fields) :
+        log.debug(
+            '{} {} #SELF {}'.format(
+                label,
+                self.__class__.__name__,
+                self
+            )
+        )
+        for key, value in fields.items():
+            log.debug(
+                '{} {} #{} {}'.format(
+                    label,
+                    self.__class__.__name__,
+                    key.upper(),
+                    value
+                )
+            )
+
 if __name__ == '__main__' :
     logging.basicConfig(level=logging.DEBUG)
     
@@ -272,6 +236,6 @@ if __name__ == '__main__' :
     gal.append('C:/Users/Public/Pictures/Sample Pictures/Tulips.jpg')
     gal.append('http://httpbin.org/image/jpeg')
     gal.append('https://dummyimage.com/1024x768')
-    gal.append('https://dummyimage.com/800x600')
 
-    #root.mainloop()
+    log.info('====== CREATION ROOT MAINLOOP **********************')
+    root.mainloop()

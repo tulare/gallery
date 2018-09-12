@@ -1,32 +1,99 @@
-#!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
+from __future__ import (
+    absolute_import,
+    print_function, division,
+    unicode_literals
+)
+
+# Configuration
+import requirements
+from pk.config import Configuration
+conf = Configuration()
+assert conf.checklist(['User-Agent'])
+
+# Paramètres ligne de commande
+import logging
+import argparse
+
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawTextHelpFormatter
+)
+parser_group = parser.add_mutually_exclusive_group(required=False)
+parser.add_argument(
+    'url',
+    nargs='?',
+    default='https://www.megapixl.com/clipart',
+)
+parser_group.add_argument(
+    '-I', '--images',
+    action='store_true',
+    help='capture embedded images'
+)
+parser_group.add_argument(
+    '-K', '--links',
+    action='store_true',
+    help='capture linked images'
+)
+parser.add_argument(
+    '-X', '--ext',
+    action='append',
+    default=[]
+)
+parser.add_argument(
+    '-F', '--format',
+    default='{0}{8}/',
+    help='format'
+)
+parser.add_argument(
+    '-L', '--loglevel',
+    default='WARNING',
+    #default='INFO',
+    #default='DEBUG',
+    help='log level'
+)
+args = parser.parse_args()
+if not args.links :
+    args.images = True
+if len(args.ext) == 0 :
+    args.ext = ['jpg', 'jpeg']
 
 # Logging
-import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=args.loglevel)
 logging.info('start logging')
 
-import argparse
+try : # python 3.x
+    import tkinter as tk
+    import tkinter.ttk as ttk
+except : # python 2.x
+    import Tkinter as tk
+    import ttk
+    
 import functools
 import tempfile
+import subprocess
 
-import tkinter as tk
-import tkinter.ttk as ttk
+# Services
+from pk.services.exceptions import ServiceError
+from pk.services.web import GrabService
+from pk.services.youtube import YoutubeService
 
+# Widgets
 import core.elements
-from helpers.services import GrabService, ServiceError
+core.elements.Image.webRequest.user_agent = conf.get('User-Agent')
 from widgets.gallery import GalleryFrame
 from widgets.window import ImageWindow
 
-UA = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0"
-core.elements.Image.webRequest.user_agent = UA
+# Helpers
+from helpers.video import Video
 
-class Application(tk.Tk) :
+
+class Application(tk.Tk, object) :
 
     def __init__(self, options, service) :
-        super().__init__()
+        super(Application, self).__init__()
         self.options = options
         self.service = service
+        self.youtube = YoutubeService()
         self.createWidgets()
 
     def createWidgets(self) :
@@ -65,6 +132,26 @@ class Application(tk.Tk) :
         spinBox.pack(side=tk.LEFT)
         self.cols.set(5)
 
+        self.url = tk.StringVar()
+        ttk.Entry(
+            toolbar,
+            width=50,
+            textvariable=self.url
+        ).pack(
+            side=tk.LEFT
+        )
+        self.url.set(self.service.url)
+
+        self.format = tk.StringVar()
+        ttk.Entry(
+            toolbar,
+            width=20,
+            textvariable=self.format
+        ).pack(
+            side=tk.LEFT
+        )
+        self.format.set(self.options.format)
+        
         self.status = ttk.Label(toolbar, text='')
         self.status.pack(side=tk.LEFT, fill=tk.X)
 
@@ -77,6 +164,7 @@ class Application(tk.Tk) :
 
         # Action on thumbnail click
         self.bind('<<ClickThumb>>', self.click_thumb)
+        self.bind('<<MiddleClickThumb>>', self.middle_click_thumb)
         self.bind('<<RightClickThumb>>', self.right_click_thumb)
                 
     def clear(self) :
@@ -105,7 +193,8 @@ class Application(tk.Tk) :
     def update(self) :
         logging.info('update in progress')
         self.status.config(text='work in progress...')
-        self.service.update()
+        self.service.url = self.url.get()
+        #self.service.update()
         logging.info('update done')
         self.status.config(text='update done.')
         self.load()
@@ -125,53 +214,65 @@ class Application(tk.Tk) :
             ImageWindow(
                 self, source=image, closeFunc=lambda widget : True
             ).lift()
+            logging.info(
+                '{}'.format(
+                    image.source
+                )
+            )
+
+    def build_url(self, source) :
+        data = [ self.service.base ]
+        data.extend(source.replace('.','/').split('/'))
+        built_url = self.format.get().format(*data)
+        logging.warning(
+            'built_url: {}'.format(
+                built_url
+            )
+        )
+        return built_url
+
+    def middle_click_thumb(self, event=None) :
+        for image in self.gal.find_withid(event.state) :
+            self.youtube.url = self.build_url(image.source)
+            title, video_url = self.youtube.video(720)
+            video = Video(video_url, title)
+            video.player = 'ffplay'
+            proc = video.play()
+            logging.warning(
+                '{} {} {}'.format(
+                    proc.pid,
+                    video.player.__class__.__name__,
+                    self.youtube.url
+                )
+            )
 
     def right_click_thumb(self, event=None) :
         for image in self.gal.find_withid(event.state) :
-            image.source = image.source
+            self.youtube.url = self.build_url(image.source)
+            title, video_url = self.youtube.video(720)
+            video = Video(video_url, title)
+            proc = video.play()
+            logging.warning(
+                '{} {} {}'.format(
+                    proc.pid,
+                    video.player.__class__.__name__,
+                    self.youtube.url
+                )
+            )
 
 if __name__ == '__main__' :
-
-    # Gestion paramètres ligne de commande
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser_group = parser.add_mutually_exclusive_group(required=False)
-    parser.add_argument(
-        'url',
-        nargs='?',
-        default='https://www.megapixl.com/clipart'
-    )
-    parser_group.add_argument(
-        '-I', '--images',
-        action='store_true',
-        help='capture embedded images'
-    )
-    parser_group.add_argument(
-        '-L', '--links',
-        action='store_true',
-        help='capture linked images'
-    )
-    parser.add_argument(
-        '-X', '--ext',
-        action='append',
-        default=[]
-    )
-    args = parser.parse_args()
-    if not args.links :
-        args.images = True
-    if len(args.ext) == 0 :
-        args.ext = ['jpg', 'jpeg']
 
     logging.info('args=%r', args)
 
     # Grab Service
     logging.info('starting grab service')
     gs = GrabService()
-    gs.user_agent = UA
+    gs.user_agent = conf.get('User-Agent')
     gs.ext = args.ext
     try :
         gs.url = args.url
     except ServiceError as e :
-        print(e)
+        logging.error(e)
         exit()
 
     # User Interface and mainloop

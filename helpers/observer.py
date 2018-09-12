@@ -1,16 +1,23 @@
 # -*- encoding: utf-8 -*-
+from __future__ import (
+    absolute_import,
+    print_function, division
+)
 
 import abc
 
+# compatible with Python 2.x *and* 3.x
+ABC = abc.ABCMeta('ABC', (object,), { '__slots__' : ()})
+
 # --- INTERFACES -----------------------------------------------
 
-class IObserver(metaclass=abc.ABCMeta) :
+class IObserver(ABC) :
 
     @abc.abstractmethod
     def observe(self, *args, **kwargs) :
         pass
 
-class IObservable(metaclass=abc.ABCMeta) :
+class IObservable(ABC) :
     
     @abc.abstractmethod
     def addObserver(self, observer) :
@@ -37,7 +44,11 @@ class Observable(IObservable) :
 
     def addObserver(self, observer) :
         if not isinstance(observer, IObserver) :
-            raise ValueError("{} : don't respect interface IObserver".format(observer))
+            raise ValueError(
+                "{} : don't respect interface IObserver".format(
+                    observer
+                )
+            )
         self._observers.add(observer)
 
     def removeObserver(self, observer) :
@@ -48,5 +59,5 @@ class Observable(IObservable) :
 
     def notify(self, *args, **kwargs) :
         for observer in self._observers :
-            observer.update(*args, **kwargs)
+            observer.observe(*args, **kwargs)
             
