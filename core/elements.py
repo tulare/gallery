@@ -181,7 +181,7 @@ class Image(ImageBase) :
                     image_web = self.webRequest(self.source)
                     image_bytes = self.webRequest(self.source).read()
                     self._image = PIL.Image.open(BytesIO(image_bytes))
-                except ServiceError as e :
+                except (ServiceError, OSError) as e :
                     self._image = self._error(repr(e))
                     log.error(
                         '{}#{} {}'.format(

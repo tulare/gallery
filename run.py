@@ -37,12 +37,13 @@ parser_group.add_argument(
 parser.add_argument(
     '-X', '--ext',
     action='append',
-    default=[]
+    default=[],
+    help='filename extension filter (can be repeated)'
 )
 parser.add_argument(
-    '-F', '--format',
-    default='{7}',
-    help='format'
+    '-H', '--head',
+    default='.*',
+    help='head filename filter'
 )
 parser.add_argument(
     '-L', '--loglevel',
@@ -94,29 +95,37 @@ class Application(tk.Tk, object) :
         self.options = options
         self.service = service
         self.youtube = YoutubeService()
+        self.formats = conf.get_json('formats', {})
+        self.task_cancel = False
         self.createWidgets()
 
     def createWidgets(self) :
+        # toolbar
         toolbar = ttk.Frame(self)
         toolbar.pack(fill=tk.X)
+
+        # clear
         ttk.Button(
             toolbar,
             text='clear', command=self.clear
         ).pack(
             side=tk.LEFT
         )
+        # load
         ttk.Button(
             toolbar,
             text='load', command=self.load
         ).pack(
             side=tk.LEFT
         )
+        # update + load
         ttk.Button(
             toolbar,
             text='update + load', command=self.update
         ).pack(
             side=tk.LEFT
         )
+        # refresh
         ttk.Button(
             toolbar,
             text='refresh', command=self.reload
@@ -124,6 +133,7 @@ class Application(tk.Tk, object) :
             side=tk.LEFT
         )
 
+        # gallery cols
         self.cols = tk.IntVar()
         spinBox = tk.Spinbox(
             toolbar,
@@ -132,16 +142,21 @@ class Application(tk.Tk, object) :
         spinBox.pack(side=tk.LEFT)
         self.cols.set(5)
 
+        # change url
         self.url = tk.StringVar()
+        url_change = self.register(self.url_change)
         ttk.Entry(
             toolbar,
             width=50,
-            textvariable=self.url
+            textvariable=self.url,
+            validate='all',
+            validatecommand=(url_change, '%V', '%s', '%P'),
         ).pack(
             side=tk.LEFT
         )
         self.url.set(self.service.url)
 
+        # modify the format for build_url
         self.format = tk.StringVar()
         ttk.Entry(
             toolbar,
@@ -150,11 +165,24 @@ class Application(tk.Tk, object) :
         ).pack(
             side=tk.LEFT
         )
-        self.format.set(self.options.format)
+        self.format.set(
+            self.formats.get(GrabService.domain(self.service.url), '')
+        )
+
+        # save format for current url domain
+        ttk.Button(
+            toolbar,
+            width=3,
+            text='db', command=self.save_format
+        ).pack(
+            side=tk.LEFT
+        )        
         
+        # status bar
         self.status = ttk.Label(toolbar, text='')
         self.status.pack(side=tk.LEFT, fill=tk.X)
 
+        # gallery
         self.gal = GalleryFrame(
             self,
             thumbsize=(256, 192),
@@ -168,6 +196,7 @@ class Application(tk.Tk, object) :
         self.bind('<<RightClickThumb>>', self.right_click_thumb)
                 
     def clear(self) :
+        self.task_cancel = True
         logging.info('clear')
         self.status.config(text='')
         self.gal.clear()
@@ -175,10 +204,13 @@ class Application(tk.Tk, object) :
     def load(self) :
         logging.info('load in progress')
         self.clear()
+        self.task_cancel = False
         if self.options.images :
             logging.info('load images in progress')
             self.status.config(text='work in progress...')
             for image in self.service.images :
+                if self.task_cancel :
+                    break
                 self.gal.append(image)
             logging.info('load images done')
             self.status.config(text='images done.')
@@ -186,6 +218,8 @@ class Application(tk.Tk, object) :
             logging.info('load links in progress')
             self.status.config(text='work in progress...')
             for link in self.service.links :
+                if self.task_cancel :
+                    break
                 self.gal.append(link)
             logging.info('load links done')
             self.status.config(text='links done.')
@@ -208,20 +242,23 @@ class Application(tk.Tk, object) :
 
     def reorg(self) :
         self.gal.cols = self.cols.get()
+            
+    def url_change(self, reason, past, future) :
+        new_dom = GrabService.domain(future)
+        fmt = self.formats.get(new_dom, '')
+        self.format.set(fmt)
+        if reason in ('focusout') :
+            if future != self.service.url :
+                self.service.url = future
+        return True
 
-    def click_thumb(self, event=None) :
-        for image in self.gal.find_withid(event.state) :
-            ImageWindow(
-                self, source=image, closeFunc=lambda widget : True
-            ).lift()
-            logging.info(
-                '{}'.format(
-                    image.source
-                )
-            )
+    def save_format(self) :
+        dom = GrabService.domain(self.url.get())
+        self.formats[dom] = self.format.get()
+        conf.add_json('formats', self.formats)
 
     def build_url(self, source) :
-        data = [ self.service.base ]
+        data = [ source, self.service.base ]
         data.extend(source.replace('.','/').split('/'))
         built_url = self.format.get().format(*data)
         logging.warning(
@@ -230,6 +267,17 @@ class Application(tk.Tk, object) :
             )
         )
         return built_url
+
+    def click_thumb(self, event=None) :
+        for image in self.gal.find_withid(event.state) :
+            ImageWindow(
+                self, source=image, closeFunc=lambda widget : True
+            ).lift()
+            logging.warning(
+                '{}'.format(
+                    image.source
+                )
+            )
 
     def middle_click_thumb(self, event=None) :
         for image in self.gal.find_withid(event.state) :
@@ -269,6 +317,7 @@ if __name__ == '__main__' :
     gs = GrabService()
     gs.user_agent = conf.get('User-Agent')
     gs.ext = args.ext
+    gs.head = args.head
     try :
         gs.url = args.url
     except ServiceError as e :
