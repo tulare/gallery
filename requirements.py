@@ -28,6 +28,7 @@ for requirement in requirements :
         # meilleur candidat pour cette distrib aux emplacements suivants
         environment.scan([
             ROOT_FOLDER + '/eggs',
+            ROOT_FOLDER + '/venv',
             'D:/devel/00modules/' + requirement
         ])
         distrib = environment.best_match(
