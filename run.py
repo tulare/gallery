@@ -6,7 +6,10 @@ from __future__ import (
 )
 
 # Configuration
-import requirements
+from pk.utils.requirements import Requirements
+requirements = Requirements()
+requirements.satisfy()
+
 from pk.config import Configuration
 conf = Configuration()
 assert conf.checklist(['User-Agent'])
@@ -261,7 +264,7 @@ class Application(tk.Tk, object) :
         data = [ source, self.service.base ]
         data.extend(source.replace('.','/').split('/'))
         built_url = self.format.get().format(*data)
-        logging.warning(
+        logging.info(
             'built_url: {}'.format(
                 built_url
             )
@@ -273,7 +276,7 @@ class Application(tk.Tk, object) :
             ImageWindow(
                 self, source=image, closeFunc=lambda widget : True
             ).lift()
-            logging.warning(
+            logging.info(
                 '{}'.format(
                     image.source
                 )
@@ -286,7 +289,7 @@ class Application(tk.Tk, object) :
             video = Video(video_url, title)
             video.player = 'ffplay'
             proc = video.play()
-            logging.warning(
+            logging.info(
                 '{} {} {}'.format(
                     proc.pid,
                     video.player.__class__.__name__,
@@ -300,7 +303,7 @@ class Application(tk.Tk, object) :
             title, video_url = self.youtube.video(720)
             video = Video(video_url, title)
             proc = video.play()
-            logging.warning(
+            logging.info(
                 '{} {} {}'.format(
                     proc.pid,
                     video.player.__class__.__name__,

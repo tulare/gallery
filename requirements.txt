@@ -1,4 +1,0 @@
-pk.config
-pk.services
-youtube-dl>=2018.9
-Pillow>=5.2
