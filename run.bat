@@ -1,4 +1,4 @@
 @SETLOCAL
-@CALL py -m pipenv sync
-@CALL py -m pipenv run python run.py %*
+@CALL pipenv install --deploy
+@CALL pipenv run python run.py %*
 @ENDLOCAL
