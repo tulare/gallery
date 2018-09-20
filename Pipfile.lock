@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4e646a2a643302439807a0f86e8830442b8df007663a7cdaf2edfadea91f5461"
+            "sha256": "659bda4decd0263943026b93bbc54dc11dfa20810ec0c117d7c08302e87aefbb"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -55,20 +55,12 @@
             "ref": "01932007ee13517d9b81d5e28be67b47ff7fba5e"
         },
         "pk.services": {
-            "editable": true,
             "git": "https://github.com/tulare/pk.services",
             "ref": "8dafed18de85ab29dcf106593595527e49145b09"
         },
         "pk.utils": {
             "git": "https://github.com/tulare/pk.utils",
             "ref": "7e58be1a2e995cae0ed94415afcaac2b4ccbb3bd"
-        },
-        "youtube-dl": {
-            "hashes": [
-                "sha256:5eced79d0b74b345052a2a60a995827dc97052f7dbf0813c76ff5b880cfea737",
-                "sha256:69d9bef52ae16c1940169e08dfbe87546829f3cddcb385131e3c27867260b5fb"
-            ],
-            "version": "==2018.9.18"
         }
     },
     "develop": {}

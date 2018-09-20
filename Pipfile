@@ -7,6 +7,6 @@ name = "pypi"
 pillow = "*"
 "pk.utils" = {git = "https://github.com/tulare/pk.utils"}
 "pk.config" = {git = "https://github.com/tulare/pk.config"}
-"pk.services" = {editable = true, git = "https://github.com/tulare/pk.services"}
+"pk.services" = {git = "https://github.com/tulare/pk.services"}
 
 [dev-packages]
