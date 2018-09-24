@@ -5,8 +5,8 @@ name = "pypi"
 
 [packages]
 pillow = "*"
-"pk.utils" = {git = "https://github.com/tulare/pk.utils"}
-"pk.config" = {git = "https://github.com/tulare/pk.config"}
-"pk.services" = {git = "https://github.com/tulare/pk.services"}
+"pk.utils" = {editable = true, git = "https://github.com/tulare/pk.utils"}
+"pk.config" = {editable = true, git = "https://github.com/tulare/pk.config"}
+"pk.services" = {editable = true, git = "https://github.com/tulare/pk.services"}
 
 [dev-packages]
