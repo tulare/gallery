@@ -58,7 +58,7 @@
         "pk.services": {
             "editable": true,
             "git": "https://github.com/tulare/pk.services",
-            "ref": "bf11b78554dff3fb960f8f176923499d6bd6be4d"
+            "ref": "8feb2615629f24b441946d11de67710e4383f0b3"
         },
         "pk.utils": {
             "editable": true,
