@@ -10,8 +10,9 @@ from pk.utils.requirements import Requirements
 requirements = Requirements()
 requirements.satisfy()
 
-from pk.config import Configuration
-conf = Configuration()
+from pk_config import config
+prj_path, prj_script = config.project_path(__file__)
+conf = config.Configuration(prj_path, db_name='gallery-config.db')
 assert conf.checklist(['User-Agent'])
 
 # Paramètres ligne de commande
@@ -77,9 +78,9 @@ import tempfile
 import subprocess
 
 # Services
-from pk.services.exceptions import ServiceError
-from pk.services.web import GrabService
-from pk.services.youtube import YoutubeService
+from pk_services.exceptions import ServiceError
+from pk_services.web import GrabService
+from pk_services.youtube import YoutubeService
 
 # Widgets
 import core.elements

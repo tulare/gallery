@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-from pk.services.players import MediaPlayer
+from pk_services.players import MediaPlayer
         
 # --------------------------------------------------------------------
         
