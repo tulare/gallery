@@ -6,9 +6,10 @@ from __future__ import (
 )
 
 # Configuration
-from pk.utils.requirements import Requirements
+from pk_config.requirements import Requirements
 requirements = Requirements()
-requirements.satisfy()
+if not requirements.satisfy() :
+    exit()
 
 from pk_config import config
 prj_path, prj_script = config.project_path(__file__)
