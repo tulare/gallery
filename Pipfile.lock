@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "af488faa1f930b6fa881c6b3bc9eca28918c236a137215faba598ce0194e932f"
+            "sha256": "53fbdb017008a2d073f63d23e0087135b490c821a96a56d85519996ce0bf37d3"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -58,15 +58,56 @@
         "pk-services": {
             "editable": true,
             "git": "https://github.com/tulare/pk-services",
-            "ref": "940d0623e7c4b051b26f32ac8228b00a438151ce"
+            "ref": "0d8ea4221d4154eac13a812c26e300afe1b87bac"
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:41f5c883405b5ed584c1497ce30cc78683407c0bc491f632daa7ac1ea0f468e9",
-                "sha256:63591bfb3996256a4f05efd02affee6f9d8ca464a128a620f748ddf896b4ca59"
+                "sha256:17b03b94031efc28457ef0808ea2c750012aa38007b2980f93a9c9b1d7387363",
+                "sha256:2edaa70587e0e3ade46f017b6f705c245c45b9b5c329227f7dfd4823e462e7b2"
             ],
-            "version": "==2018.9.26"
+            "version": "==2018.10.5"
         }
     },
-    "develop": {}
+    "develop": {
+        "altgraph": {
+            "hashes": [
+                "sha256:d6814989f242b2b43025cba7161fc1b8fb487a62cd49c49245d6fd01c18ac997",
+                "sha256:ddf5320017147ba7b810198e0b6619bd7b5563aa034da388cea8546b877f9b0c"
+            ],
+            "version": "==0.16.1"
+        },
+        "future": {
+            "hashes": [
+                "sha256:e39ced1ab767b5936646cedba8bcce582398233d6a627067d4c6a454c90cfedb"
+            ],
+            "version": "==0.16.0"
+        },
+        "macholib": {
+            "hashes": [
+                "sha256:ac02d29898cf66f27510d8f39e9112ae00590adb4a48ec57b25028d6962b1ae1",
+                "sha256:c4180ffc6f909bf8db6cd81cff4b6f601d575568f4d5dee148c830e9851eb9db"
+            ],
+            "version": "==1.11"
+        },
+        "pefile": {
+            "hashes": [
+                "sha256:4c5b7e2de0c8cb6c504592167acf83115cbbde01fe4a507c16a1422850e86cd6"
+            ],
+            "version": "==2018.8.8"
+        },
+        "pyinstaller": {
+            "hashes": [
+                "sha256:a5a6e04a66abfcf8761e89a2ebad937919c6be33a7b8963e1a961b55cb35986b"
+            ],
+            "index": "pypi",
+            "version": "==3.4"
+        },
+        "pywin32-ctypes": {
+            "hashes": [
+                "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942",
+                "sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98"
+            ],
+            "version": "==0.2.0"
+        }
+    }
 }

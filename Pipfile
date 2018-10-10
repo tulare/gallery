@@ -9,3 +9,4 @@ pillow = "*"
 "pk-services" = {editable = true, git = "https://github.com/tulare/pk-services"}
 
 [dev-packages]
+pyinstaller = "*"

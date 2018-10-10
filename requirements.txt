@@ -1,0 +1,3 @@
+git+https://github.com/tulare/pk-config#egg=pk-config
+git+https://github.com/tulare/pk-services#egg=pk-services
+Pillow

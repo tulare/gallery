@@ -5,105 +5,55 @@ from __future__ import (
     unicode_literals
 )
 
-# Configuration
-from pk_config.requirements import Requirements
-requirements = Requirements()
-if not requirements.satisfy() :
-    exit()
-
-from pk_config import config
-prj_path, prj_script = config.project_path(__file__)
-conf = config.Configuration(prj_path, db_name='gallery-config.db')
-assert conf.checklist(['User-Agent'])
-
 # Paramètres ligne de commande
 import logging
 import argparse
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawTextHelpFormatter
-)
-parser_group = parser.add_mutually_exclusive_group(required=False)
-parser.add_argument(
-    'url',
-    nargs='?',
-    default='https://www.youtube.com/feed/trending',
-)
-parser_group.add_argument(
-    '-I', '--images',
-    action='store_true',
-    help='capture embedded images'
-)
-parser_group.add_argument(
-    '-K', '--links',
-    action='store_true',
-    help='capture linked images'
-)
-parser.add_argument(
-    '-X', '--ext',
-    action='append',
-    default=[],
-    help='filename extension filter (can be repeated)'
-)
-parser.add_argument(
-    '-H', '--head',
-    default='.*',
-    help='head filename filter'
-)
-parser.add_argument(
-    '-L', '--loglevel',
-    default='WARNING',
-    #default='INFO',
-    #default='DEBUG',
-    help='log level'
-)
-args = parser.parse_args()
-if not args.links :
-    args.images = True
-if len(args.ext) == 0 :
-    args.ext = ['jpg', 'jpeg']
-
-# Logging
-logging.basicConfig(level=args.loglevel)
-logging.info('start logging')
-
+# Tkinter
 try : # python 3.x
     import tkinter as tk
     import tkinter.ttk as ttk
 except : # python 2.x
     import Tkinter as tk
     import ttk
-    
-import functools
-import tempfile
-import subprocess
+
+# Configuration
+from pk_config import config
 
 # Services
 from pk_services.exceptions import ServiceError
 from pk_services.web import GrabService
 from pk_services.youtube import YoutubeService
 
-# Widgets
-import core.elements
-core.elements.Image.webRequest.user_agent = conf.get('User-Agent')
-from widgets.gallery import GalleryFrame
-from widgets.window import ImageWindow
-
 # Helpers
 from helpers.video import Video
 
+# Widgets
+import core.elements
+from widgets.gallery import GalleryFrame
+from widgets.window import ImageWindow
+
+# ------------------------------------------------------------------------------
 
 class Application(tk.Tk, object) :
 
-    def __init__(self, options, service) :
+    def __init__(self, conf, options) :
         super(Application, self).__init__()
+        self.conf = conf
         self.options = options
-        self.service = service
+
+        self.configureService()
         self.youtube = YoutubeService()
-        self.formats = conf.get_json('formats', {})
+        self.formats = self.conf.get_json('formats', {})
         self.task_cancel = False
         self.createWidgets()
 
+    def configureService(self) :
+        self.service = GrabService()
+        self.service.user_agent = self.conf.get('User-Agent')
+        self.service.ext = self.options.ext
+        self.service.head = self.options.head
+        
     def createWidgets(self) :
         # toolbar
         toolbar = ttk.Frame(self)
@@ -159,7 +109,7 @@ class Application(tk.Tk, object) :
         ).pack(
             side=tk.LEFT
         )
-        self.url.set(self.service.url)
+        self.url.set(self.options.url)
 
         # modify the format for build_url
         self.format = tk.StringVar()
@@ -171,7 +121,7 @@ class Application(tk.Tk, object) :
             side=tk.LEFT
         )
         self.format.set(
-            self.formats.get(GrabService.domain(self.service.url), '')
+            self.formats.get(GrabService.domain(self.options.url), '')
         )
 
         # save format for current url domain
@@ -313,23 +263,79 @@ class Application(tk.Tk, object) :
                 )
             )
 
-if __name__ == '__main__' :
+# ------------------------------------------------------------------------------
 
+def parse_args() :
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser_group = parser.add_mutually_exclusive_group(required=False)
+    parser.add_argument(
+        'url',
+        nargs='?',
+        default='https://www.youtube.com/feed/trending',
+    )
+    parser_group.add_argument(
+        '-I', '--images',
+        action='store_true',
+        help='capture embedded images'
+    )
+    parser_group.add_argument(
+        '-K', '--links',
+        action='store_true',
+        help='capture linked images'
+    )
+    parser.add_argument(
+        '-X', '--ext',
+        action='append',
+        default=[],
+        help='filename extension filter (can be repeated)'
+    )
+    parser.add_argument(
+        '-H', '--head',
+        default='.*',
+        help='head filename filter'
+    )
+    parser.add_argument(
+        '-L', '--loglevel',
+        default='WARNING',
+        #default='INFO',
+        #default='DEBUG',
+        help='log level'
+    )
+    args = parser.parse_args()
+    if not args.links :
+        args.images = True
+    if len(args.ext) == 0 :
+        args.ext = ['jpg', 'jpeg']
+
+    return args
+
+# ------------------------------------------------------------------------------
+
+def main() :
+
+    # Command line parameters
+    args = parse_args()
+
+    # Logging
+    logging.basicConfig(level=args.loglevel)
+    logging.info('start logging')
     logging.info('args=%r', args)
 
-    # Grab Service
-    logging.info('starting grab service')
-    gs = GrabService()
-    gs.user_agent = conf.get('User-Agent')
-    gs.ext = args.ext
-    gs.head = args.head
-    try :
-        gs.url = args.url
-    except ServiceError as e :
-        logging.error(e)
-        exit()
+    # Configuration
+    prj_path, prj_script = config.project_path(__file__)
+    conf = config.Configuration(prj_path, db_name='gallery-config.db')
+    logging.info(conf.database)
+    assert conf.checklist(['User-Agent'])
+    core.elements.Image.webRequest.user_agent = conf.get('User-Agent')
 
     # User Interface and mainloop
-    app = Application(options=args, service=gs)
+    app = Application(conf=conf, options=args)
     app.geometry('-20+20')
     app.mainloop()
+
+# ------------------------------------------------------------------------------
+
+if __name__ == '__main__' :
+    main()
