@@ -18,6 +18,7 @@ except : # python 2.x
     import ttk
 
 # Configuration
+import __main__ as locator
 from pk_config import config
 
 # Services
@@ -324,8 +325,8 @@ def main() :
     logging.info('args=%r', args)
 
     # Configuration
-    prj_path, prj_script = config.project_path(__file__)
-    conf = config.Configuration(prj_path, db_name='gallery-config.db')
+    prj_database = config.project_database(locator)
+    conf = config.Configuration(prj_database)
     logging.info(conf.database)
     assert conf.checklist(['User-Agent'])
     core.elements.Image.webRequest.user_agent = conf.get('User-Agent')

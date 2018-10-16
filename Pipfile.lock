@@ -53,12 +53,12 @@
         "pk-config": {
             "editable": true,
             "git": "https://github.com/tulare/pk-config",
-            "ref": "16ca4be65871ca470cbdabc1e236359d812544ca"
+            "ref": "de8ca058cbcc486f8a625c850d914802cb311910"
         },
         "pk-services": {
             "editable": true,
             "git": "https://github.com/tulare/pk-services",
-            "ref": "0d8ea4221d4154eac13a812c26e300afe1b87bac"
+            "ref": "2bd024e9e009bca875ff6f62d1cc2b37ab4b470e"
         },
         "youtube-dl": {
             "hashes": [
