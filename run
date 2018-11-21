@@ -1,3 +1,3 @@
 #!/bin/bash
 
-DISPLAY=:0 $(pipenv --py) main.py $*
+DISPLAY=:0 $(pipenv --py) $(dirname $0)/main.py $*
