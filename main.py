@@ -67,6 +67,13 @@ class Application(tk.Tk, object) :
         ).pack(
             side=tk.LEFT
         )
+        # stopload
+        ttk.Button(
+            toolbar,
+            text='stop', command=self.loadstop
+        ).pack(
+            side=tk.LEFT
+        )
         # load
         ttk.Button(
             toolbar,
@@ -77,7 +84,7 @@ class Application(tk.Tk, object) :
         # update + load
         ttk.Button(
             toolbar,
-            text='update + load', command=self.update
+            text='update/load', command=self.update
         ).pack(
             side=tk.LEFT
         )
@@ -93,6 +100,7 @@ class Application(tk.Tk, object) :
         self.cols = tk.IntVar()
         spinBox = tk.Spinbox(
             toolbar,
+            width=5,
             from_=3, to=8,
             textvariable=self.cols, command=self.reorg)
         spinBox.pack(side=tk.LEFT)
@@ -150,6 +158,12 @@ class Application(tk.Tk, object) :
         self.bind('<<ClickThumb>>', self.click_thumb)
         self.bind('<<MiddleClickThumb>>', self.middle_click_thumb)
         self.bind('<<RightClickThumb>>', self.right_click_thumb)
+
+
+    def loadstop(self) :
+        self.task_cancel = True
+        logging.info('stop')
+        self.status.config(text='stopped')
                 
     def clear(self) :
         self.task_cancel = True
@@ -205,7 +219,12 @@ class Application(tk.Tk, object) :
         self.format.set(fmt)
         if reason in ('focusout') :
             if future != self.service.url :
-                self.service.url = future
+                try :
+                    self.service.url = future
+                    self.status.config(text='Url ok')
+                except ServiceError as e :
+                    logging.error('url={} : {}'.format(future, e))
+                    self.status.config(text='Url {}'.format(e))
         return True
 
     def save_format(self) :
