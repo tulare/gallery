@@ -8,7 +8,10 @@
 @IF NOT EXIST "%_venv%" GOTO :novenv
 
 @REM --- run python in venv ---
-@FOR /F %%P in ('py -m pipenv --py') DO @%%P %APP_DIR%\main.py %*
+@REM FOR /F %%P in ('py -m pipenv --py') DO @%%P %APP_DIR%\main.py %*
+@FOR /F %%P in ('py -m pipenv --py') DO @SET _python_exe=%%P
+@ECHO using: %_python_exe%
+@%_python_exe% %APP_DIR%\main.py %*
 @GOTO end
 
 :novenv

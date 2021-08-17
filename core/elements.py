@@ -230,7 +230,8 @@ class ImageNone(Image) :
 
     def __init__(self) :
         super(ImageNone, self).__init__(
-            source='https://dummyimage.com/192x144/ff0000/ffffff?text=no+image'
+            #source='https://dummyimage.com/192x144/ff0000/ffffff?text=no+image'
+            source=None
         )
 
 # --------------------------------------------------------------------
