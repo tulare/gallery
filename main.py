@@ -141,10 +141,14 @@ class Application(tk.Tk, object) :
         ).pack(
             side=tk.LEFT
         )        
-        
+
         # status bar
-        self.status = ttk.Label(toolbar, text='')
+        self.status = ttk.Label(toolbar, text='<status>', background='cornflowerblue', width=20)
         self.status.pack(side=tk.LEFT, fill=tk.X)
+
+        # status bar yt
+        self.status_yt = ttk.Label(toolbar, text='<video>', background='darkseagreen', width=20)
+        self.status_yt.pack(side=tk.LEFT, fill=tk.X)        
 
         # gallery
         self.gal = GalleryFrame(
@@ -256,32 +260,44 @@ class Application(tk.Tk, object) :
 
     def middle_click_thumb(self, event=None) :
         for image in self.gal.find_withid(event.state) :
-            self.youtube.url = self.build_url(image.source)
-            title, video_url = self.youtube.video(720)
-            video = Video(video_url, title)
-            video.player = 'ffplay'
-            proc = video.play()
-            logging.info(
-                '{} {} {}'.format(
-                    proc.pid,
-                    video.player.__class__.__name__,
-                    self.youtube.url
-                )
-            )
+            self.spawn_video(image, player='ffplay')
 
     def right_click_thumb(self, event=None) :
         for image in self.gal.find_withid(event.state) :
-            self.youtube.url = self.build_url(image.source)
+            self.spawn_video(image)
+
+    def spawn_video(self, image, player=None) :
+        self.youtube.url = self.build_url(image.source)
+        message = self.build_url(image.source).split('/')[-2]
+        logging.info(
+            'spawn_video : {}'.format(
+                self.youtube.url,
+            )
+        )
+        try :
             title, video_url = self.youtube.video(720)
-            video = Video(video_url, title)
-            proc = video.play()
-            logging.info(
-                '{} {} {}'.format(
-                    proc.pid,
-                    video.player.__class__.__name__,
-                    self.youtube.url
+        except ServiceError as e :
+            logging.warning(
+                '{} {}'.format(
+                    message,
+                    e
                 )
             )
+            self.status_yt.config(text=message, background='orange')
+            return
+            
+        self.status_yt.config(text=message, background='darkseagreen')            
+        video = Video(video_url, title)
+        video.player = player
+        proc = video.play()
+        logging.info(
+            '{} {} {}'.format(
+                proc.pid,
+                video.player.__class__.__name__,
+                self.youtube.url
+            )
+        )
+        
 
 # ------------------------------------------------------------------------------
 
