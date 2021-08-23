@@ -74,13 +74,6 @@ class Application(tk.Tk, object) :
         ).pack(
             side=tk.LEFT
         )
-        # load
-        ttk.Button(
-            toolbar,
-            text='load', command=self.load
-        ).pack(
-            side=tk.LEFT
-        )
         # update + load
         ttk.Button(
             toolbar,
@@ -234,7 +227,7 @@ class Application(tk.Tk, object) :
     def save_format(self) :
         dom = GrabService.domain(self.url.get())
         self.formats[dom] = self.format.get()
-        conf.add_json('formats', self.formats)
+        self.conf.add_json('formats', self.formats)
 
     def build_url(self, source) :
         data = [ source, self.service.base ]
@@ -309,7 +302,7 @@ def parse_args() :
     parser.add_argument(
         'url',
         nargs='?',
-        default='https://www.youtube.com/feed/trending',
+        default='https://',
     )
     parser_group.add_argument(
         '-I', '--images',
