@@ -22,9 +22,9 @@ import __main__ as locator
 from pk_config import config
 
 # Services
-from pk_services.exceptions import ServiceError
-from pk_services.web import GrabService
-from pk_services.youtube import YoutubeService
+from services.exceptions import ServiceError
+from services.web import GrabService
+from services.youtube import YoutubeService
 
 # Helpers
 from helpers.video import Video
@@ -88,6 +88,28 @@ class Application(tk.Tk, object) :
         ).pack(
             side=tk.LEFT
         )
+
+        # radios Images or Links
+        self.imgorlnk = tk.BooleanVar()
+        ttk.Radiobutton(
+            toolbar,
+            text='I',
+            var=self.imgorlnk,
+            value=True,
+            command=self.selectImagesOrLinks,
+        ).pack(
+            side=tk.LEFT
+        )
+        ttk.Radiobutton(
+            toolbar,
+            text='L',
+            var=self.imgorlnk,
+            value=False,
+            command=self.selectImagesOrLinks,
+        ).pack(
+            side=tk.LEFT
+        )
+        self.imgorlnk.set(self.options.images)
 
         # gallery cols
         self.cols = tk.IntVar()
@@ -156,7 +178,6 @@ class Application(tk.Tk, object) :
         self.bind('<<MiddleClickThumb>>', self.middle_click_thumb)
         self.bind('<<RightClickThumb>>', self.right_click_thumb)
 
-
     def loadstop(self) :
         self.task_cancel = True
         logging.info('stop')
@@ -207,6 +228,17 @@ class Application(tk.Tk, object) :
         logging.info('reload done')
         self.status.config(text='reload done')
 
+    def selectImagesOrLinks(self) :
+        self.options.images = self.imgorlnk.get()
+        self.options.links = not self.options.images
+        logging.info(
+            'selectImagesOrLinks {} => Img:{} Lnk:{}'.format(
+                self.imgorlnk.get(),
+                self.options.images,
+                self.options.links
+            )
+        )
+
     def reorg(self) :
         self.gal.cols = self.cols.get()
             
@@ -230,12 +262,13 @@ class Application(tk.Tk, object) :
         self.conf.add_json('formats', self.formats)
 
     def build_url(self, source) :
-        data = [ source, self.service.base ]
-        data.extend(source.replace('.','/').split('/'))
-        built_url = self.format.get().format(*data)
+        #data = [ source, self.service.base ]
+        #data.extend(source.replace('.','/').split('/'))
+        #built_url = self.format.get().format(*data)
+        built_url = self.service.images_links[source]
         logging.info(
             'built_url: {}'.format(
-                built_url
+                built_url,
             )
         )
         return built_url
@@ -260,8 +293,9 @@ class Application(tk.Tk, object) :
             self.spawn_video(image)
 
     def spawn_video(self, image, player=None) :
-        self.youtube.url = self.build_url(image.source)
-        message = self.build_url(image.source).split('/')[-2]
+        built_url = self.build_url(image.source)
+        message = built_url.split('/')[-2]
+        self.youtube.url = built_url
         logging.info(
             'spawn_video : {}'.format(
                 self.youtube.url,
