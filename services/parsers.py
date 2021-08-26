@@ -72,14 +72,24 @@ class MediaHTMLParser(htmlparser.HTMLParser, object) :
         if tag == 'a' and 'href' in attributes :
             log.debug("start tag : {} href={}".format(tag, attributes['href']))
             self._linkopen = attributes['href']
+
+        if tag == 'div' and 'style' in attributes :
+            log.debug("start tag : {} style={}".format(tag, attributes['style']))
+            if 'background-image:url(' in attributes['style'] :
+                if self._linkopen is not None :
+                    image = attributes['style'].split('(')[-1].split(')')[0]
+                    log.info("background-image:url = {}".format(image))
+                    self._images_links[image] = self._linkopen
+            
         if tag == 'img' and 'src' in attributes :
             log.debug("start tag : {} src={}".format(tag, attributes['src']))
             if self._linkopen is not None :
+                log.info("image src={}".format(attributes['src']))
                 self._images_links[attributes['src']] = self._linkopen
 
     def handle_endtag(self, tag) :
         if tag == 'a' :
             self._linkopen = None
-        log.debug("end tag : {}".format(tag))
+            log.debug("end tag : {}".format(tag))
 
 # --------------------------------------------------------------------
