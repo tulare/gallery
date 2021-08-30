@@ -89,28 +89,6 @@ class Application(tk.Tk, object) :
             side=tk.LEFT
         )
 
-        # radios Images or Links
-        self.imgorlnk = tk.BooleanVar()
-        ttk.Radiobutton(
-            toolbar,
-            text='I',
-            var=self.imgorlnk,
-            value=True,
-            command=self.selectImagesOrLinks,
-        ).pack(
-            side=tk.LEFT
-        )
-        ttk.Radiobutton(
-            toolbar,
-            text='L',
-            var=self.imgorlnk,
-            value=False,
-            command=self.selectImagesOrLinks,
-        ).pack(
-            side=tk.LEFT
-        )
-        self.imgorlnk.set(self.options.images)
-
         # gallery cols
         self.cols = tk.IntVar()
         spinBox = tk.Spinbox(
@@ -148,7 +126,20 @@ class Application(tk.Tk, object) :
             self.formats.get(GrabService.domain(self.options.url), '')
         )
 
-        # save format for current url domain
+        # checkbox Usedb
+        self._usedb = tk.BooleanVar()
+        ttk.Checkbutton(
+            toolbar,
+            text='use',
+            var=self._usedb,
+            onvalue=True,
+            offvalue=False
+        ).pack(
+            side=tk.LEFT
+        )
+        self._usedb.set(False)
+
+        # [db] : save format for current url domain
         ttk.Button(
             toolbar,
             width=3,
@@ -262,10 +253,14 @@ class Application(tk.Tk, object) :
         self.conf.add_json('formats', self.formats)
 
     def build_url(self, source) :
-        #data = [ source, self.service.base ]
-        #data.extend(source.replace('.','/').split('/'))
-        #built_url = self.format.get().format(*data)
-        built_url = self.service.images_links[source]
+        logging.debug('use_db : {}'.format(self._usedb.get()))
+        if self._usedb.get() :
+            logging.debug('source : {}'.format(source))
+            data = [ source, self.service.base ]
+            data.extend(source.replace('.','/').split('/'))
+            built_url = self.format.get().format(*data)
+        else :
+            built_url = self.service.images_links[source]
         logging.info(
             'built_url: {}'.format(
                 built_url,

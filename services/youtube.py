@@ -78,7 +78,55 @@ class YoutubeService(Service) :
                         fmt['format']
                     )
                 )
-        
+
+    def select_fmt(self, max_height=None) :
+        """
+        Selection d'un format video
+        """
+        log.debug("select fmt : max_height={}".format(max_height))
+        assert self.validate()
+
+        # cas playlist
+        if '_type' in self.infos :
+            dct = self['entries'][0]
+        else :
+            dct = self.infos
+
+        # pas de liste de formats
+        if 'formats' not in dct :
+            return dct
+
+        # identifier la clé utilisée
+        if 'quality' in dct :
+            keywd = 'quality'
+        if 'height' in dct :
+            keywd = 'height'
+        log.debug("select_format : key='{}'".format(keywd))
+
+        # preselection clés
+        dct_k = [
+            e for e in dct['formats']
+            if keywd in e.keys()
+        ]
+
+        # preselection height
+        dct_h = [
+            e for e in dct_k
+            if e[keywd] >= max_height
+        ]
+
+        try :
+            selected = min(
+                [e for e in dct_h],
+                key=lambda x : x[keywd]
+            )
+        except (ValueError, TypeError) :
+            selected = max(
+                [e for e in dct_k],
+                key=lambda x : x[keywd]
+            )
+        return selected
+
     def select_format(self, max_height=None) :
         """
         Selection d'un format video
@@ -153,7 +201,8 @@ class YoutubeService(Service) :
         """
         Retourne le titre et l'url résolue pour la vidéo sélectionnée
         """
-        selected = self.select_format(max_height)
+        #selected = self.select_format(max_height)
+        selected = self.select_fmt(max_height)
 
         title = '{} - {}'.format(
             self['title'],
