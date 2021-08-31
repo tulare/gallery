@@ -155,6 +155,28 @@ class Player_mpv(MediaPlayer) :
         
 # --------------------------------------------------------------------
 
+class Player_mpv720p(MediaPlayer) :
+    """Implementation Concrete : mpv """
+
+    id_player = 'mpv720p'
+    program = 'mpv.exe'
+
+    def play(self, title, video_uri) :
+        command = [
+            self.program,
+            '--ytdl-format', '[height<=?720]/best', 
+            '--title', title,
+            video_uri
+        ]
+        command[1:1] = self.options
+        return popen_player(command, self.console)
+
+    def check(self) :
+        command = [ self.program, '--version' ]
+        return check_player(command)
+        
+# --------------------------------------------------------------------
+
 class Player_ffplay(MediaPlayer) :
     """Implementation Concrete : ffplay"""
 

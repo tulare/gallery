@@ -52,7 +52,7 @@ class Application(tk.Tk, object) :
     def configureService(self) :
         self.service = GrabService()
         self.service.user_agent = self.conf.get('User-Agent')
-        self.service.ext = self.options.ext
+        self.service.ext = ('jpg', 'jpeg')
         self.service.head = self.options.head
         
     def createWidgets(self) :
@@ -104,7 +104,7 @@ class Application(tk.Tk, object) :
         url_change = self.register(self.url_change)
         ttk.Entry(
             toolbar,
-            width=50,
+            width=42,
             textvariable=self.url,
             validate='all',
             validatecommand=(url_change, '%V', '%s', '%P'),
@@ -112,6 +112,20 @@ class Application(tk.Tk, object) :
             side=tk.LEFT
         )
         self.url.set(self.options.url)
+
+        # extensions
+        self.extensions = tk.StringVar()
+        ext_change = self.register(self.ext_change)
+        ttk.Entry(
+            toolbar,
+            width=12,
+            textvariable=self.extensions,
+            validate='all',
+            validatecommand=(ext_change, '%V', '%s', '%P'),
+        ).pack(
+            side=tk.LEFT
+        )
+        self.extensions.set(self.service.ext)
 
         # modify the format for build_url
         self.format = tk.StringVar()
@@ -219,17 +233,6 @@ class Application(tk.Tk, object) :
         logging.info('reload done')
         self.status.config(text='reload done')
 
-    def selectImagesOrLinks(self) :
-        self.options.images = self.imgorlnk.get()
-        self.options.links = not self.options.images
-        logging.info(
-            'selectImagesOrLinks {} => Img:{} Lnk:{}'.format(
-                self.imgorlnk.get(),
-                self.options.images,
-                self.options.links
-            )
-        )
-
     def reorg(self) :
         self.gal.cols = self.cols.get()
             
@@ -245,6 +248,15 @@ class Application(tk.Tk, object) :
                 except ServiceError as e :
                     logging.error('url={} : {}'.format(future, e))
                     self.status.config(text='Url {}'.format(e))
+        return True
+
+    def ext_change(self, reason, past, future) :
+        self.service.ext = (e.strip() for e in future.split())
+        logging.debug(
+            'ext_change: reason={} past={} future={} ext={}'.format(
+            reason, past, future, self.service.ext
+            )
+        )
         return True
 
     def save_format(self) :
@@ -281,11 +293,11 @@ class Application(tk.Tk, object) :
 
     def middle_click_thumb(self, event=None) :
         for image in self.gal.find_withid(event.state) :
-            self.spawn_video(image, player='ffplay')
+            self.spawn_video(image, player='mpv')
 
     def right_click_thumb(self, event=None) :
         for image in self.gal.find_withid(event.state) :
-            self.spawn_video(image)
+            self.spawn_video(image, player='mpv720p')
 
     def spawn_video(self, image, player=None) :
         built_url = self.build_url(image.source)
@@ -309,7 +321,10 @@ class Application(tk.Tk, object) :
             return
             
         self.status_yt.config(text=message, background='darkseagreen')            
-        video = Video(video_url, title)
+        if self.options.native :
+            video = Video(video_url, title)
+        else :
+            video = Video(built_url, title)
         video.player = player
         proc = video.play()
         logging.info(
@@ -343,11 +358,10 @@ def parse_args() :
         action='store_true',
         help='capture linked images'
     )
-    parser.add_argument(
-        '-X', '--ext',
-        action='append',
-        default=[],
-        help='filename extension filter (can be repeated)'
+    parser_group.add_argument(
+        '-N', '--native',
+        action='store_true',
+        help='native video or ytdl'
     )
     parser.add_argument(
         '-H', '--head',
@@ -364,8 +378,6 @@ def parse_args() :
     args = parser.parse_args()
     if not args.links :
         args.images = True
-    if len(args.ext) == 0 :
-        args.ext = ['jpg', 'jpeg']
 
     return args
 
