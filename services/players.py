@@ -140,10 +140,15 @@ class Player_mpv(MediaPlayer) :
     id_player = 'mpv'
     program = 'mpv.exe'
 
+    def __init__(self, *args, **kwargs) :
+        options = { 'console' : True }
+        options.update(kwargs)
+        super().__init__(*args, **options)
+
     def play(self, title, video_uri) :
         command = [
             self.program,
-            '--title', title,
+            '--title={}'.format(title),
             video_uri
         ]
         command[1:1] = self.options
@@ -161,11 +166,16 @@ class Player_mpv720p(MediaPlayer) :
     id_player = 'mpv720p'
     program = 'mpv.exe'
 
+    def __init__(self, *args, **kwargs) :
+        options = { 'console' : True }
+        options.update(kwargs)
+        super().__init__(*args, **options)
+
     def play(self, title, video_uri) :
         command = [
             self.program,
-            '--ytdl-format', '[height<=?720]/best', 
-            '--title', title,
+            '--ytdl-format=[height<=?720]/best', 
+            '--title={}'.format(title),
             video_uri
         ]
         command[1:1] = self.options
