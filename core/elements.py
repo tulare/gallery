@@ -18,8 +18,8 @@ import abc
 import PIL.Image, PIL.ImageTk, PIL.ImageDraw, PIL.ImageFont
 from io import BytesIO
 
-from pk_services.exceptions import ServiceError
-from pk_services.web import WebRequest
+from services.exceptions import ServiceError
+from services.web import WebRequest
 from helpers.observer import Observable
 
 # --------------------------------------------------------------------
