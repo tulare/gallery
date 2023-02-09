@@ -166,7 +166,7 @@ class YoutubeService(Service) :
         try :
             av_formats = list(
                 filter(
-                    lambda f : f['acodec'] is not 'none',
+                    lambda f : f['acodec'] is not None,
                     video_formats
                 )
             )
