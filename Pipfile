@@ -11,3 +11,4 @@ youtube-dl = "*"
 
 [dev-packages]
 pyinstaller = "*"
+pyreadline = "*"
