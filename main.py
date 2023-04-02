@@ -402,7 +402,7 @@ def main() :
 
     # User Interface and mainloop
     app = Application(conf=conf, options=args)
-    app.geometry('-20+20')
+    app.geometry('1366x768-20+10')
     app.mainloop()
 
 # ------------------------------------------------------------------------------
