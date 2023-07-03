@@ -208,8 +208,12 @@ class Image(ImageBase) :
             fontMessage = PIL.ImageFont.load_default()
         
         draw = PIL.ImageDraw.Draw(image_error)
-        sizeError = draw.textsize('Image Error', font=fontError)
-        sizeMessage = draw.textsize(message, font=fontMessage) 
+        # deprecated # sizeError = draw.textsize('Image Error', font=fontError)
+        left, top, right, bottom = draw.textbbox((0,0), 'Image Error', font=fontError)
+        sizeError = right - left, bottom - top
+        # deprecated # sizeMessage = draw.textsize(message, font=fontMessage)
+        left, top, right, bottom = draw.textbbox((0,0), message, font=fontMessage)
+        sizeMessage = right - left, bottom - top
         draw.text(
             ( (1024 - sizeError[0]) // 2, (768 - sizeError[1])//3 ),
             'Image Error', fill='white', font=fontError
