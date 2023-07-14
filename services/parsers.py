@@ -1,10 +1,3 @@
-# -*- encoding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    print_function, division,
-    unicode_literals
-)
-
 __all__ = [ 'CharsetHTMLParser', 'MediaHMTLParser' ]
 
 # logging
@@ -12,14 +5,11 @@ import logging
 log = logging.getLogger(__name__)
 log.debug('MODULE {}'.format(__name__))
 
-try : # python 2.7
-    import HTMLParser as htmlparser
-except ImportError :
-    import html.parser as htmlparser
+import html.parser
 
 # --------------------------------------------------------------------
 
-class CharsetHTMLParser(htmlparser.HTMLParser, object) :
+class CharsetHTMLParser(html.parser.HTMLParser, object) :
 
     def parse(self, data) :
         self._content = []
@@ -45,7 +35,7 @@ class CharsetHTMLParser(htmlparser.HTMLParser, object) :
 
 # --------------------------------------------------------------------
 
-class MediaHTMLParser(htmlparser.HTMLParser, object) :
+class MediaHTMLParser(html.parser.HTMLParser, object) :
 
     def parse(self, data) :
         self._images_links = {}

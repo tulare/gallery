@@ -1,5 +1,11 @@
-# -*- encoding: utf-8 -*-
+__all__ = [ 'Video' ]
 
+# logging
+import logging
+log = logging.getLogger(__name__)
+log.debug('MODULE {}'.format(__name__))
+
+from services.core import Tor
 from services.players import MediaPlayer
         
 # --------------------------------------------------------------------
@@ -14,16 +20,30 @@ class Video(object) :
     @property
     def player(self) :
         if self._player is None :
-            self._player = MediaPlayer.getPlayer()
+            self.change_player()
         return self._player
 
     @player.setter
     def player(self, player) :
-        self._player = MediaPlayer.getPlayer(player)
+        self.change_player(player)
+        
+            
+
+    def change_player(self, player=None) :
+        if player is None :
+            self._player = MediaPlayer.getPlayer()
+        else :
+            self._player = MediaPlayer.getPlayer(player)
+        if Tor.isEnabled() :
+            self._player.add_options('--ytdl-raw-options=proxy=socks5://127.0.0.1:9150')
+        log.debug(f'change_player - {self._player.id_player}:options{self._player.options}')
 
     def play(self) :
-        return self.player.play(self._titre, self._uri)
-
+        process = self.player.play(self._titre, self._uri)
+        log.debug(f'play - {self._player.id_player}:console={self._player.console}')
+        log.debug(f'play - {self._player.id_player}:options{self._player.options}')
+        log.debug(f'play - process:{process.pid}')
+        return process
 
 # --------------------------------------------------------------------
 

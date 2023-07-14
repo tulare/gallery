@@ -23,6 +23,7 @@ from pk_config import config
 
 # Services
 from services.exceptions import ServiceError
+from services.core import Tor
 from services.web import GrabService
 from services.youtube import YoutubeService
 
@@ -139,6 +140,32 @@ class Application(tk.Tk, object) :
         self.format.set(
             self.formats.get(GrabService.domain(self.options.url), '')
         )
+
+        # checkbox Tor
+        self._useTor = tk.BooleanVar()
+        ttk.Checkbutton(
+            toolbar,
+            text='Tor', command=self.toggle_tor,
+            var=self._useTor,
+            onvalue=True,
+            offvalue=False
+        ).pack(
+            side=tk.LEFT
+        )
+        self._useTor.set(Tor.isEnabled())
+
+        # checkbox Native
+        self._native = tk.BooleanVar()
+        ttk.Checkbutton(
+            toolbar,
+            text='native',
+            var=self._native,
+            onvalue=True,
+            offvalue=False
+        ).pack(
+            side=tk.LEFT
+        )
+        self._native.set(self.options.native)
 
         # checkbox Usedb
         self._usedb = tk.BooleanVar()
@@ -259,6 +286,13 @@ class Application(tk.Tk, object) :
         )
         return True
 
+    def toggle_tor(self) :
+        logging.info(f'toggle_tor: Tor enabled = {self._useTor.get()}')
+        if self._useTor.get() :
+            Tor.enable()
+        else :
+            Tor.disable()
+
     def save_format(self) :
         dom = GrabService.domain(self.url.get())
         self.formats[dom] = self.format.get()
@@ -292,10 +326,12 @@ class Application(tk.Tk, object) :
             )
 
     def middle_click_thumb(self, event=None) :
+        self.max_height = None
         for image in self.gal.find_withid(event.state) :
-            self.spawn_video(image, player='mpv')
+            self.spawn_video(image, player='ffplay')
 
     def right_click_thumb(self, event=None) :
+        self.max_height = 720
         for image in self.gal.find_withid(event.state) :
             self.spawn_video(image, player='mpv720p')
 
@@ -308,8 +344,10 @@ class Application(tk.Tk, object) :
                 self.youtube.url,
             )
         )
+        for fmt in self.youtube.get_formats() :
+            logging.debug(f'spawn_video : format - {fmt}')
         try :
-            title, video_url = self.youtube.video(720)
+            title, video_url = self.youtube.video(self.max_height)
         except ServiceError as e :
             logging.warning(
                 '{} {}'.format(
@@ -321,19 +359,21 @@ class Application(tk.Tk, object) :
             return
             
         self.status_yt.config(text=message, background='darkseagreen')            
-        if self.options.native :
+        if self._native.get() :
+            logging.debug(f'spawn_video : native - title = {title}')
+            logging.debug(f'spawn_video : native - video_url = {video_url}')
             video = Video(video_url, title)
         else :
+            logging.debug(f'spawn_video : built - title = {title}')
+            logging.debug(f'spawn_video : built - built_url = {built_url}')
+            logging.debug(f'spawn_video : built - video_url = {video_url}')
             video = Video(built_url, title)
         video.player = player
         proc = video.play()
-        logging.info(
-            '{} {} {}'.format(
-                proc.pid,
-                video.player.__class__.__name__,
-                self.youtube.url
-            )
-        )
+        logging.info(f'spawn_video : play - player = {video.player.__class__.__name__}')
+        logging.info(f'spawn_video : play - pid = {proc.pid}')
+        logging.info(f'spawn_video : play - titre = {video._titre}')
+        logging.info(f'spawn_video : play - uri = {video._uri}')
         
 
 # ------------------------------------------------------------------------------

@@ -1,10 +1,3 @@
-# -*- encoding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    print_function, division,
-    unicode_literals
-)
-
 __all__ = [ 'WebService', 'WebRequest', 'GrabService' ]
 
 # logging
@@ -16,12 +9,8 @@ import os
 import re
 import json
 
-try : # python 2.7
-    import urllib2 as requests
-    import urlparse
-except ImportError :
-    import urllib.request as requests
-    import urllib.parse as urlparse
+import urllib.request
+import urllib.parse
 
 from .core import Service
 from .exceptions import ServiceError
@@ -34,7 +23,7 @@ class WebService(Service) :
     @Service.opener.setter
     def opener(self, opener) :
         if opener is None :
-            self._opener = requests.build_opener()
+            self._opener = urllib.request.build_opener()
         else :
             self._opener = opener
 
@@ -56,23 +45,24 @@ class WebService(Service) :
         self.opener.addheaders = headers.items()
 
     def test(self) :
-        response = self.opener.open('http://httpbin.org/get?option=value')
+        url = 'https://httpbin.org/get?option=value'
+        request = urllib.request.Request(url)
+        response = self.opener.open(request)
         return json.load(response)
 
     @classmethod
     def domain(cls, url) :
-        url_split = urlparse.urlsplit(url)
+        url_split = urllib.parse.urlsplit(url)
         return url_split.netloc
-        
 
 # --------------------------------------------------------------------
 
 class WebRequest(WebService) :
     def __call__(self, url) :
-        request = requests.Request(url)
+        request = urllib.request.Request(url)
         try :
             response = self.opener.open(request)
-        except requests.URLError as e:
+        except urllib.request.URLError as e:
             if hasattr(e, 'reason') :
                 raise ServiceError(e.reason)
             elif hasattr(e, 'code') :
@@ -94,14 +84,14 @@ class GrabService(WebService) :
 
     def _grab(self, url) :
         charset_parser = CharsetHTMLParser()
-        request = requests.Request(url)
+        request = urllib.request.Request(url)
         try :
             response = self.opener.open(request)
             page = response.read()
             charset_parser.parse(page)
             self.parser.parse(page.decode(charset_parser.charset))
             self._url = url
-        except requests.URLError as e:
+        except urllib.request.URLError as e:
             if hasattr(e, 'reason') :
                 raise ServiceError(e.reason)
             elif hasattr(e, 'code') :
@@ -120,7 +110,7 @@ class GrabService(WebService) :
 
     @property
     def base(self) :
-        return urlparse.urljoin(self._url, '/')
+        return urllib.parse.urljoin(self._url, '/')
 
     @property
     def head(self) :
@@ -148,7 +138,7 @@ class GrabService(WebService) :
         images_links = {}
         try :
             images_links = {
-                urlparse.urljoin(self.url, image) : urlparse.urljoin(self.url, link)
+                urllib.parse.urljoin(self.url, image) : urllib.parse.urljoin(self.url, link)
                 for image, link in self.parser.images_links.items()
                 if re_head.search(os.path.basename(image))
                 and re_ext.search(image)
