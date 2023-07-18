@@ -328,7 +328,7 @@ class Application(tk.Tk, object) :
     def middle_click_thumb(self, event=None) :
         self.max_height = None
         for image in self.gal.find_withid(event.state) :
-            self.spawn_video(image, player='ffplay')
+            self.spawn_video(image, player='mpv')
 
     def right_click_thumb(self, event=None) :
         self.max_height = 720

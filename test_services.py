@@ -5,51 +5,92 @@ logging.basicConfig(level=logging.DEBUG)
 import re
 import msvcrt
 import urllib.parse
+import lxml.html
 
 # Configuration
 import __main__ as locator
 from pk_config import config
 
 from services.core import Tor
+from services.parsers import CharsetHTMLParser, ImageLinkHTMLParser, MediaHTMLParser
 from services.web import WebService, GrabService
 from services.youtube import YoutubeService
 from services.players import MediaPlayer
 from helpers.video import Video
 
+class Page :
+
+    def __init__(self, url) :
+        self.url_charge(url)        
+
+    def __repr__(self) :
+        cls = self.__class__.__name__
+        return f"{cls}(url='{self.url}')"
+
+    def url_charge(self, url) :
+        ws = WebService()
+        ws.user_agent = conf.get('User-Agent')
+        req = ws.opener.open(url)
+        bindata = req.read()
+        charset_parser = CharsetHTMLParser()
+        charset_parser.parse(bindata)
+        data = bindata.decode(charset_parser.charset)
+        self._page = {
+            'url' : req.url,
+            'data' : data,
+            'tree' : lxml.html.fromstring(data)
+        }
+
+    @property
+    def url(self) :
+        return self._page['url']
+
+    @url.setter
+    def url(self, url) :
+        self.url_charge(url)
+
+    @property
+    def data(self) :
+        return self._page['data']
+
+    @property
+    def tree(self) :
+        return self._page['tree']
+
+    @property
+    def images_links(self) :
+        parser = ImageLinkHTMLParser()
+        parser.parse(self.data)
+        result = dict(zip(
+            map(lambda url : urllib.parse.urljoin(self.url, url), parser.images),
+            map(lambda url : urllib.parse.urljoin(self.url, url), parser.links)
+        ))
+        return result
+
+    @property
+    def media_images_links(self) :
+        parser = MediaHTMLParser()
+        parser.parse(self.data)
+        result = dict(zip(
+            map(lambda url : urllib.parse.urljoin(self.url, url), parser.images),
+            map(lambda url : urllib.parse.urljoin(self.url, url), parser.links)
+        ))
+        return result
+                
 def play_link(indice) :
     print(gs.links[indice])
-    yt.url = gs.links[indice].split('#')[0]
+    yt.url = gs.links[indice]
     print(yt.title)
-    v = Video(yt.get_format()['url'], yt.title)
-    p = v.play()
+    p = mpv.play(yt.title, yt.url)
     p.wait()
 
-def images_links(url) :
-    result = {}
-
-    resp = ws.opener.open(url)
-    data = resp.read()
-    images = re.findall(b'<img [^<]+/>', data)
-    for img in images :
-        try :
-            idx_img = data.index(img)
-            idx_src = data.index(b'src="', idx_img)
-            idx_src_end = data.index(b'"', idx_src + 5)
-            image = urllib.parse.urljoin(resp.url, f'{data[idx_src+5:idx_src_end].decode()}')
-            idx_href = data.index(b'href="', idx_src)
-            idx_href_end = data.index(b'"', idx_href + 6)
-            link = urllib.parse.urljoin(resp.url, f'{data[idx_href+6:idx_href_end].decode()}')
-            result[image] = link
-        except :
-            pass
-    return result
-
-
 def play_list(url) :
-    il = images_links(url)
+    page = Page(url)
+    il = page.images_links
 
     for clip in il :
         try :
+            print(il)
             yt.url = il[clip]
             #v = Video(*reversed(yt.video(720)))
             p = mpv.play(yt.title, yt.url)
@@ -83,4 +124,5 @@ if __name__ == "__main__" :
     yt = YoutubeService()
 
     mpv = MediaPlayer(id='mpv')
+    mpv.program = 'mpv.com'
     

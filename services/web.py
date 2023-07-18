@@ -14,7 +14,7 @@ import urllib.parse
 
 from .core import Service
 from .exceptions import ServiceError
-from .parsers import CharsetHTMLParser, MediaHTMLParser
+from .parsers import CharsetHTMLParser, MediaHTMLParser, ImageLinkHTMLParser
 
 # --------------------------------------------------------------------
 
@@ -77,7 +77,8 @@ class GrabService(WebService) :
     def __init__(self, opener=None) :
         super(GrabService, self).__init__(opener)
 
-        self.parser = MediaHTMLParser()
+        self.parser = ImageLinkHTMLParser()
+        #self.parser = MediaHTMLParser()
         self._url = None
         self._head = '.*'
         self._ext = '',
