@@ -1,6 +1,6 @@
 -i https://pypi.org/simple
 brotli==1.0.9 ; platform_python_implementation == 'CPython'
-certifi==2023.5.7 ; python_version >= '3.6'
+certifi==2023.7.22 ; python_version >= '3.6'
 mutagen==1.46.0 ; python_version >= '3.7'
 pillow==10.0.0
 -e git+https://github.com/tulare/pk-config@3b6587720bc7e22a0cbedf3b571fc1841680430d#egg=pk-config
