@@ -17,6 +17,9 @@ class ImageLinkHTMLParser :
 
     def parse(self, data) :
         self._images_links = {}
+        self.add_parse(data)
+
+    def add_parse(self, data) :
         tree = lxml.html.fromstring(data)
         self._images_links.update(zip(
             tree.xpath("//a[descendant::img]/descendant::img/@src"),
@@ -26,7 +29,7 @@ class ImageLinkHTMLParser :
             tree.xpath("//div[*/img]//img/@src"),
             tree.xpath("//div[*/img]/following-sibling::a/@href")
         ))
-
+        
     @property
     def images(self) :
         return list(self.images_links.keys())
