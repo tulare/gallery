@@ -8,6 +8,7 @@ from __future__ import (
 # Paramètres ligne de commande
 import logging
 import argparse
+import os
 
 # Tkinter
 try : # python 3.x
@@ -53,6 +54,7 @@ class Application(tk.Tk, object) :
     def configureService(self) :
         self.service = GrabService()
         self.service.user_agent = self.conf.get('User-Agent')
+        self.service.parser.config.update(self.conf.get_json('domains'))
         self.service.ext = ('jpg', 'jpeg')
         self.service.head = self.options.head
         
@@ -231,7 +233,16 @@ class Application(tk.Tk, object) :
             for image in self.service.images :
                 if self.task_cancel :
                     break
-                self.gal.append(image)
+                try :
+                    link = self.service.images_links[image]
+                    logging.debug(f"load: link={link}")
+                    basename = link.rstrip('/').rpartition('/')[-1]
+                    logging.debug(f"load: basename={basename}")
+                    title = basename.split('.')[0]
+                except :
+                    title = 'title'
+                logging.debug(f"load: title={title}")
+                self.gal.append(image, title)
             logging.info('load images done')
             self.status.config(text='images done.')
         if self.options.links :

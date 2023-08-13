@@ -90,7 +90,8 @@ class GrabService(WebService) :
             response = self.opener.open(request)
             page = response.read()
             charset_parser.parse(page)
-            self.parser.parse(page.decode(charset_parser.charset))
+            #self.parser.parse(page.decode(charset_parser.charset))
+            self.parser.parse(page.decode(charset_parser.charset), url)
             self._url = url
         except urllib.request.URLError as e:
             if hasattr(e, 'reason') :

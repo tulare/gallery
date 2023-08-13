@@ -4,6 +4,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 import re
 import msvcrt
+import json
 import urllib.parse
 import lxml.html
 
@@ -11,16 +12,22 @@ import lxml.html
 import __main__ as locator
 from pk_config import config
 
+# Test Gallery
+import tkinter as tk
+from widgets.gallery import GalleryFrame
+
 from services.core import Tor
-from services.parsers import CharsetHTMLParser, ImageLinkHTMLParser, MediaHTMLParser
+from services.parsers import DomainParserConfig, CharsetHTMLParser, ImageLinkHTMLParser, MediaHTMLParser
 from services.web import WebService, GrabService
 from services.youtube import YoutubeService
 from services.players import MediaPlayer
 from helpers.video import Video
 
+
 class Page :
 
     def __init__(self, url) :
+        self.parser = ImageLinkHTMLParser()
         self.url_charge(url)        
 
     def __repr__(self) :
@@ -59,11 +66,13 @@ class Page :
 
     @property
     def images_links(self) :
-        parser = ImageLinkHTMLParser()
-        parser.parse(self.data)
-        result = dict(zip(
-            map(lambda url : urllib.parse.urljoin(self.url, url), parser.images),
-            map(lambda url : urllib.parse.urljoin(self.url, url), parser.links)
+        self.parser.parse(self.data, self.url)
+        result = dict(map(
+            lambda url : (
+                urllib.parse.urljoin(self.url, url[0]),
+                urllib.parse.urljoin(self.url, url[1])
+            ),
+            self.parser.images_links.items()
         ))
         return result
 
@@ -71,15 +80,35 @@ class Page :
     def media_images_links(self) :
         parser = MediaHTMLParser()
         parser.parse(self.data)
-        result = dict(zip(
-            map(lambda url : urllib.parse.urljoin(self.url, url), parser.images),
-            map(lambda url : urllib.parse.urljoin(self.url, url), parser.links)
+        result = dict(map(
+            lambda url : (
+                urllib.parse.urljoin(self.url, url[0]),
+                urllib.parse.urljoin(self.url, url[1])
+            ),
+            parser.images_links.items()
         ))
         return result
-                
-def play_link(indice) :
-    print(gs.links[indice])
-    yt.url = gs.links[indice]
+
+    def get_images_links(self, domain_parser_config=None) :
+        if domain_parser_config is None :
+            domain_parser_config = self.parser.config
+        motif_img, motif_link = domain_parser_config.find_url(self.url)
+        result = dict(zip(
+            map(
+                lambda url : urllib.parse.urljoin(self.url, url),
+                self.tree.xpath(motif_img)
+                ),
+            map(
+                lambda url : urllib.parse.urljoin(self.url, url),
+                self.tree.xpath(motif_link)
+                )
+            )
+        )
+        return result
+
+def play_link(links, indice) :
+    print(links[indice])
+    yt.url = links[indice]
     print(yt.title)
     p = mpv.play(yt.title, yt.url)
     p.wait()
@@ -102,6 +131,18 @@ def play_list(url) :
             break
         if keypress == b'n' :
             continue
+
+def test_gallery(page=None) :
+    root = tk.Tk()
+    gal = GalleryFrame(root, rows=3, cols=5)
+    gal.pack(fill=tk.BOTH, expand=True)
+
+    if page is not None :
+        il = page.images_links
+        for image in il :
+            gal.append(image, il[image])
+
+    root.mainloop()
 
 if __name__ == "__main__" :
 

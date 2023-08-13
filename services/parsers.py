@@ -1,12 +1,66 @@
-__all__ = [ 'CharsetHTMLParser', 'ImageLinkHTMLParser', 'MediaHMTLParser' ]
+__all__ = [ 'DomainParserConfig', 'CharsetHTMLParser', 'ImageLinkHTMLParser', 'MediaHMTLParser' ]
 
 # logging
 import logging
 log = logging.getLogger(__name__)
 log.debug('MODULE {}'.format(__name__))
 
+import json
+import urllib.parse
 import html.parser
 import lxml.html
+
+# --------------------------------------------------------------------
+
+class DomainParserConfig :
+
+    def __init__(self) :
+        self._data = {
+            'default' : [
+                "//a[descendant::img]/descendant::img/@src",
+                "//a[descendant::img]/@href"
+            ],
+        }
+
+    @property
+    def keys(self) :
+        return self._data.keys()
+
+    @property
+    def items(self) :
+        return self._data.items()
+
+    def __getitem__(self, key) :
+        return self.get_domain(key)
+
+    def toJSON(self, indent=None) :
+        return json.dumps(self._data, indent=indent)
+
+    def saveJSON(self, jsonFilename) :
+        with open(jsonFilename, 'w') as fd :
+            fd.write(self.toJSON(indent=2))
+
+    def fromJSON(self, json_data) :
+        self.update(json.loads(json_data))
+
+    def loadJSON(self, jsonFilename) :
+        with open(jsonFilename, 'r') as fd :
+            self.fromJSON(fd.read())
+
+    def update(self, dico) :
+        self._data.update(dico)
+
+    def add_domain(self, domain, xpath_img, xpath_link) :
+        self._data[domain] = (xpath_img, xpath_link)
+
+    def get_domain(self, domain) :
+        return self._data.get(domain, self._data.get('default'))
+
+    def find_url(self, url) :
+        url_split = urllib.parse.urlsplit(url)
+        domain_items = url_split.netloc.split('.')
+        domain = '.'.join(domain_items[-2:])
+        return self.get_domain(domain)
 
 # --------------------------------------------------------------------
 
@@ -14,21 +68,24 @@ class ImageLinkHTMLParser :
 
     def __init__(self) :
         self._images_links = {}
+        self._domain_parser_config = DomainParserConfig()
 
-    def parse(self, data) :
+    @property
+    def config(self) :
+        return self._domain_parser_config
+
+    def parse(self, data, url) :
         self._images_links = {}
-        self.add_parse(data)
+        motif_image, motif_link = self._domain_parser_config.find_url(url)
+        self.add_parse(data, motif_image, motif_link)
 
-    def add_parse(self, data) :
+    def add_parse(self, data, motif_image, motif_link) :
         tree = lxml.html.fromstring(data)
         self._images_links.update(zip(
-            tree.xpath("//a[descendant::img]/descendant::img/@src"),
-            tree.xpath("//a[descendant::img]/@href")
+            tree.xpath(motif_image),
+            tree.xpath(motif_link)
         ))
-        self._images_links.update(zip(
-            tree.xpath("//div[*/img]//img/@src"),
-            tree.xpath("//div[*/img]/following-sibling::a/@href")
-        ))
+        log.debug(f"add_parse: {motif_image} / {motif_link} : {len(self.images_links)}")
         
     @property
     def images(self) :

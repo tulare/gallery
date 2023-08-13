@@ -27,6 +27,24 @@ import core.elements
 import widgets.images
 
 # -------------------------------------------------------------------------
+
+class GalleryImage :
+
+    def __init__(self, image, title=None) :
+        self._image = image
+        self._title = title
+        if self._title is None :
+            self._title = image.basename
+        
+    @property
+    def image(self) :
+        return self._image
+
+    @property
+    def title(self) :
+        return self._title
+
+# -------------------------------------------------------------------------
         
 class GalleryFrame(ttk.Frame, object) :
 
@@ -34,7 +52,7 @@ class GalleryFrame(ttk.Frame, object) :
                  thumbsize=(192,192), rows=3, cols=5, **kwargs) :
         super(GalleryFrame, self).__init__(master, **kwargs)
 
-        self.images = []
+        self.gimages = []
         self._cols = cols
         self.thumbsize = thumbsize
         self.slotsize = (self.thumbsize[0] + 8, self.thumbsize[1] + 32)
@@ -66,7 +84,7 @@ class GalleryFrame(ttk.Frame, object) :
 
     @property
     def entries(self) :
-        return len(self.images)
+        return len(self.gimages)
 
     @property
     def cols(self) :
@@ -104,59 +122,71 @@ class GalleryFrame(ttk.Frame, object) :
 
     @property
     def current(self) :
-        return self.canvas.find_withtag('current')
+        current = self.canvas.find_withtag('current')
+        self.debug('CURRENT', current=current)
+        return current
 
 
     def find_withid(self, canvas_id) :
-        return filter(
-            lambda i : i['id'] == canvas_id,
-            self.images
+##        return map(lambda i : i.image, filter(
+##            lambda i : i.image['id'] == canvas_id,
+##            self.gimages
+##        ))
+        result = filter(
+            lambda image : image['id'] == canvas_id,
+            map(
+                lambda gimage : gimage.image,
+                self.gimages
+            )
         )
+        self.debug('FIND_WITHID', canvas_id=canvas_id, result=result)
+        return result
 
     def append(self, source, title=None) :
         image = core.elements.Image(source=source, thumbsize=self.thumbsize)
         self.debug('APPEND_IMAGE', filename=image.filename, image=image.image)
-        self._add_entry(image)
+        self._add_entry(image, title)
 
     def replace(self, indice, source) :
         if indice < self.entries :
-            self.images[indice].source = source
+            self.gimages[indice].image.source = source
 
     def clear(self) :
         self.canvas.delete('all')
-        self.images[:] = []
+        self.gimages[:] = []
 
     def pop(self, indice=None) :
         if indice is None :
-            image = self.images.pop()
+            gal_image = self.gimages.pop()
         elif indice < self.entries :
-            image = self.images.pop(indice)
+            gal_image = self.gimages.pop(indice)
         else :
             return
         self.reorg()
-        return image            
+        return gal_image
         
     def reload(self, indice=None) :
         if indice is None :            
-            for image in self.images :
-                image.source = image.source
+            for gal_image in self.gimages :
+                gal_image.image.source = gal_image.image.source
                 self.update()
         elif indice < self.entries :
-            image = self.images[indice]
-            image.source = image.source
+            gal_image = self.gimages[indice]
+            gal_image.image.source = gal_image.image.source
 
     def reorg(self) :
         #saved_images = self.images.copy()
-        saved_images = copy.copy(self.images)
+        saved_gimages = copy.copy(self.gimages)
         self.clear()
 
-        for image in saved_images :
-            self._add_entry(image)
+        for gal_image in saved_gimages :
+            self._add_entry(gal_image.image, gal_image.title)
 
-    def _add_entry(self, image) :
+    def _add_entry(self, image, title=None) :
+        gal_image = GalleryImage(image, title)
         widgets.images.ImageCanvas(
             self.canvas,
-            image,
+            gal_image.image,
             self.posx, self.posy,
             tag='thumbnail',
         )
@@ -164,7 +194,7 @@ class GalleryFrame(ttk.Frame, object) :
             self.text_posx + 1, self.text_posy + 1,
             anchor=tk.CENTER,
             width=self.slotsize[0],
-            text=image.basename,
+            text=gal_image.title,
             tag='shadow',
             fill='black'
         )
@@ -172,12 +202,12 @@ class GalleryFrame(ttk.Frame, object) :
             self.text_posx, self.text_posy,
             anchor=tk.CENTER,
             width=self.slotsize[0],
-            text=image.basename,
+            text=gal_image.title,
             tag='text',
             fill='royalblue'
         )
         self.canvas.config(scrollregion=self.scrollregion)
-        self.images.append(image)
+        self.gimages.append(gal_image)
         self.update()
 
     def _click_event(self, event) :
@@ -233,9 +263,10 @@ if __name__ == '__main__' :
     gal = GalleryFrame(root, rows=3, cols=3)
     gal.pack(fill=tk.BOTH, expand=True)
     gal.append(None)
-    gal.append('C:/Users/Public/Pictures/Sample Pictures/Tulips.jpg')
-    gal.append('http://httpbin.org/image/jpeg')
-    gal.append('https://dummyimage.com/1024x768')
+    #gal.append('C:/Users/Public/Pictures/Sample Pictures/Tulips.jpg')
+    gal.append('https://httpbin.org/image/png', 'cochon')
+    gal.append('https://httpbin.org/image/jpeg', 'fenec')
+    gal.append('https://dummyimage.com/1024x768','dummy')
 
     log.info('====== CREATION ROOT MAINLOOP **********************')
     root.mainloop()
