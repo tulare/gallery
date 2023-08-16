@@ -23,6 +23,17 @@ from services.youtube import YoutubeService
 from services.players import MediaPlayer
 from helpers.video import Video
 
+def importDomainsTo(conf) :
+    dp = DomainParserConfig()
+    dp.loadJSON('domains.json')
+    conf.add('domains', dp.toJSON())
+    return dp
+
+def exportDomainsFrom(conf) :
+    dp = DomainParserConfig()
+    dp.update(conf.get_json('domains'))
+    dp.saveJSON('domains.json')
+    return dp
 
 class Page :
 
@@ -132,9 +143,9 @@ def play_list(url) :
         if keypress == b'n' :
             continue
 
-def test_gallery(page=None) :
+def show_gallery(page=None) :
     root = tk.Tk()
-    gal = GalleryFrame(root, rows=3, cols=5)
+    gal = GalleryFrame(root, rows=3, cols=7)
     gal.pack(fill=tk.BOTH, expand=True)
 
     if page is not None :

@@ -22,6 +22,15 @@ class DomainParserConfig :
             ],
         }
 
+    def __str__(self) :
+        return self.toJSON(indent=2)
+
+    def __eq__(self, other) :
+        return self._data == other._data
+
+    def __getitem__(self, key) :
+        return self.get_domain(key)
+
     @property
     def keys(self) :
         return self._data.keys()
@@ -29,9 +38,6 @@ class DomainParserConfig :
     @property
     def items(self) :
         return self._data.items()
-
-    def __getitem__(self, key) :
-        return self.get_domain(key)
 
     def toJSON(self, indent=None) :
         return json.dumps(self._data, indent=indent)
