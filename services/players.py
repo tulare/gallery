@@ -122,11 +122,10 @@ class Player_mpv(MediaPlayer) :
         super().__init__(*args, **options)
 
     def play(self, title, video_uri) :
-        command = [
-            self.program,
-            '--title={}'.format(title),
-            video_uri
-        ]
+        command = [ self.program ]
+        if title :
+            command.append(f'--title={title}')
+        command.append(video_uri)
         command[1:1] = self.options
         return popen_player(command, self.console)
 
