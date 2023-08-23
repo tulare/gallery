@@ -7,7 +7,7 @@ import __main__ as locator
 from pk_config import config
 
 # Services
-from services.lastfm import LastFmUrl, Playlist
+from services.lastfm import LastFmPage, LastFmUrl, Playlist
 from services.web import WebService, GrabService
 from services.youtube import YoutubeService
 from services.players import MediaPlayer
@@ -37,8 +37,47 @@ def parse_args() :
         '-U', '--url',
     )
 
+    parser_group.add_argument(
+        '-M', '--m3u',
+    )
+        
     parser.add_argument(
         '-S', '--song',
+    )
+
+    parser.add_argument(
+        '-B', '--album'
+    )
+
+    parser.add_argument(
+        '-a', '--play-auto',
+        action='store_true'
+    )
+
+    parser.add_argument(
+        '-c', '--play-cache',
+        action='store_true'
+    )
+
+    parser.add_argument(
+        '-s', '--save-m3u',
+    )
+
+    parser.add_argument(
+        '-b', '--batch',
+        type=int,
+        default=50,
+    )
+
+    parser.add_argument(
+        '-H', '--height',
+        type=int,
+        default=1080
+    )
+
+    parser.add_argument(
+        '-R', '--shuffle',
+        action='store_true'
     )
 
     args = parser.parse_args()
@@ -64,11 +103,28 @@ if __name__ == '__main__' :
     lastUrl = LastFmUrl(**vars(args))
     logging.info(f"url={lastUrl.url}")
 
+    # Build Album
+    album = None
+    if args.album :
+        album = LastFmPage(url=lastUrl.url, user_agent=conf.get('User-Agent'))
+
     # Build playlist
-    pl = Playlist(lastUrl.url)
+    pl = Playlist(url=lastUrl.url, batch=args.batch, album=album)
+
+    # Save playlist ?
+    if args.save_m3u :
+        pl.save_m3u(args.save_m3u)
 
     # Play auto
-    pl.play_auto(height=720)
+    if args.play_auto :
+        pl.play_auto(height=args.height, shuffle=args.shuffle)
 
+    # Play cache
+    if args.play_cache :
+        pl.play_cache(height=args.height, shuffle=args.shuffle)
+
+    # Play m3u
+    if args.m3u :
+        pl.play_m3u(args.m3u, height=args.height, shuffle=args.shuffle)
 
     
