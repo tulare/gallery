@@ -1,5 +1,6 @@
 # project configuration
 *config.db
+Pipfile.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

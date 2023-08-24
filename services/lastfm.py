@@ -215,7 +215,7 @@ class Playlist :
             pass
 
     def save_m3u(self, name='playlist') :
-        with open(f'{name}.m3u', 'w', encoding='utf8') as fd :
+        with open(f'data/{name}.m3u', 'w', encoding='utf8') as fd :
             fd.write(f"#EXTM3U\n")
             for ie_result in self._cache :
                 try :
@@ -239,7 +239,7 @@ class Playlist :
         self._mpv.add_options(f'--ytdl-format=bestvideo[height<={height}]+bestaudio/best[height<={height}]')
         if shuffle :
             self._mpv.add_options(f'--shuffle')
-        p = self._mpv.play('', f'{name}.m3u')
+        p = self._mpv.play('', f'data/{name}.m3u')
         p.wait()
 
     def play_cache(self, height=1080, shuffle=False) :
