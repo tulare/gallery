@@ -23,10 +23,10 @@ import __main__ as locator
 from pk_config import config
 
 # Services
-from services.exceptions import ServiceError
-from services.core import Tor
-from services.web import GrabService
-from services.youtube import YoutubeService
+from pk_services.exceptions import ServiceError
+from pk_services.core import Tor
+from pk_services.web import GrabService
+from pk_services.youtube import YoutubeService
 
 # Helpers
 from helpers.video import Video

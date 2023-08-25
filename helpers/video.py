@@ -5,8 +5,8 @@ import logging
 log = logging.getLogger(__name__)
 log.debug('MODULE {}'.format(__name__))
 
-from services.core import Tor
-from services.players import MediaPlayer
+from pk_services.core import Tor
+from pk_services.players import MediaPlayer
         
 # --------------------------------------------------------------------
         

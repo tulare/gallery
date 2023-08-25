@@ -7,10 +7,10 @@ import __main__ as locator
 from pk_config import config
 
 # Services
-from services.lastfm import LastFmPage, LastFmUrl, Playlist
-from services.web import WebService, GrabService
-from services.youtube import YoutubeService
-from services.players import MediaPlayer
+from pk_services.lastfm import LastFmPage, LastFmUrl, Playlist
+from pk_services.web import WebService, GrabService
+from pk_services.youtube import YoutubeService
+from pk_services.players import MediaPlayer
 
 import yt_dlp
 from yt_dlp.utils import DownloadError, ExtractorError

@@ -16,11 +16,11 @@ from pk_config import config
 import tkinter as tk
 from widgets.gallery import GalleryFrame
 
-from services.core import Tor
-from services.parsers import DomainParserConfig, CharsetHTMLParser, ImageLinkHTMLParser, MediaHTMLParser
-from services.web import WebService, GrabService
-from services.youtube import YoutubeService
-from services.players import MediaPlayer
+from pk_services.core import Tor
+from pk_services.parsers import DomainParserConfig, CharsetHTMLParser, ImageLinkHTMLParser, MediaHTMLParser
+from pk_services.web import WebService, GrabService
+from pk_services.youtube import YoutubeService
+from pk_services.players import MediaPlayer
 from helpers.video import Video
 
 def importDomainsTo(conf) :
