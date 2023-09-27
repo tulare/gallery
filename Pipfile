@@ -5,11 +5,10 @@ name = "pypi"
 
 [packages]
 pillow = "*"
-pk-config = {editable = true, ref="v0.1.3", git = "https://github.com/tulare/pk-config"}
+pk-config = {editable = true, ref = "v0.1.3", git = "https://github.com/tulare/pk-config"}
 pk-services = {editable = true, ref = "v0.1.5", git = "https://github.com/tulare/pk-services"}
 
 [dev-packages]
-pyinstaller = "*"
 pyreadline3 = "*"
 
 [requires]
