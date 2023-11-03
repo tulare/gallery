@@ -3,10 +3,10 @@ brotli==1.1.0 ; platform_python_implementation == 'CPython'
 certifi==2023.7.22 ; python_version >= '3.6'
 lxml==4.9.3 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
 mutagen==1.47.0 ; python_version >= '3.7'
-pillow==10.0.1
+pillow==10.1.0
 -e git+https://github.com/tulare/pk-config@5875c9d792d052c372a048643c27ac3c887d2542#egg=pk-config
--e git+https://github.com/tulare/pk-services@31c5e4135b7ab139678f420119ccd4d6b4d53919#egg=pk-services
+-e git+https://github.com/tulare/pk-services@5c5472356e6d510ec91e9bf73d6708f96bcb84e2#egg=pk-services
 pycryptodomex==3.19.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
 pysocks==1.7.1 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-websockets==11.0.3 ; python_version >= '3.7'
-yt-dlp==2023.9.24 ; python_version >= '3.7'
+websockets==12.0 ; python_version >= '3.8'
+yt-dlp==2023.10.13 ; python_version >= '3.7'

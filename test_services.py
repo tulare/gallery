@@ -6,7 +6,7 @@ import re
 import msvcrt
 import json
 import urllib.parse
-import lxml.html
+import lxml.etree
 
 # Configuration
 import __main__ as locator
@@ -37,13 +37,18 @@ def exportDomainsFrom(conf) :
 
 class Page :
 
-    def __init__(self, url) :
+    def __init__(self, url, *, charset_fallback='latin-1') :
         self.parser = ImageLinkHTMLParser()
-        self.url_charge(url)        
+        self.parser.config.loadJSON('domains.json')
+        self._charset_fallback = charset_fallback
+        self.url_charge(url)
 
     def __repr__(self) :
         cls = self.__class__.__name__
         return f"{cls}(url='{self.url}')"
+
+    def recharge(self) :
+        self.url_charge(self.url)
 
     def url_charge(self, url) :
         ws = WebService()
@@ -52,11 +57,14 @@ class Page :
         bindata = req.read()
         charset_parser = CharsetHTMLParser()
         charset_parser.parse(bindata)
-        data = bindata.decode(charset_parser.charset)
+        try :
+            data = bindata.decode(charset_parser.charset)
+        except UnicodeDecodeError :
+            data = bindata.decode(self._charset_fallback)
         self._page = {
             'url' : req.url,
             'data' : data,
-            'tree' : lxml.html.fromstring(data)
+            'tree' : lxml.etree.HTML(data)
         }
 
     @property
@@ -117,12 +125,29 @@ class Page :
         )
         return result
 
+    def gallery(self) :
+        root = tk.Tk()
+        gal = GalleryFrame(root, rows=3, cols=7)
+        gal.pack(fill=tk.BOTH, expand=True)
+        imlk = self.images_links
+        for image in imlk :
+            gal.append(image, imlk[image])
+        root.mainloop()
+    
+    def play_link(self, indice) :
+        imlk = self.images_links
+        play_link(self.parser.links, indice)
+
+# ------------------------------------------------------------------------------
+
 def play_link(links, indice) :
     print(links[indice])
     yt.url = links[indice]
     print(yt.title)
     p = mpv.play(yt.title, yt.url)
     p.wait()
+
+# ------------------------------------------------------------------------------
 
 def play_list(url) :
     page = Page(url)
@@ -142,6 +167,7 @@ def play_list(url) :
             break
         if keypress == b'n' :
             continue
+# ------------------------------------------------------------------------------
 
 def show_gallery(page=None) :
     root = tk.Tk()
@@ -154,6 +180,8 @@ def show_gallery(page=None) :
             gal.append(image, il[image])
 
     root.mainloop()
+
+# ------------------------------------------------------------------------------
 
 if __name__ == "__main__" :
 
