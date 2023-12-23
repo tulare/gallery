@@ -136,7 +136,7 @@ class Page :
     
     def play_link(self, indice) :
         imlk = self.images_links
-        play_link(self.parser.links, indice)
+        play_link(list(imlk.values()), indice)
 
 # ------------------------------------------------------------------------------
 
