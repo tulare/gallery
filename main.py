@@ -337,39 +337,41 @@ class Application(tk.Tk, object) :
             )
 
     def middle_click_thumb(self, event=None) :
-        self.max_height = None
+        self.format_sort = f"res:1080,+tbr"
         for image in self.gal.find_withid(event.state) :
             self.spawn_video(image, player='mpv')
 
     def right_click_thumb(self, event=None) :
-        self.max_height = 720
+        self.format_sort = f"res:720,+tbr"
         for image in self.gal.find_withid(event.state) :
-            self.spawn_video(image, player='mpv720p')
+            self.spawn_video(image, player='mpv')
 
     def spawn_video(self, image, player=None) :
         built_url = self.build_url(image.source)
-        message = built_url.split('/')[-2]
+        logging.info(f"spawn_video : {built_url}")
+
+        message = built_url.rstrip('/').split('/')[-1]
+        self.youtube = YoutubeService(format_sort=self.format_sort)
         self.youtube.url = built_url
-        logging.info(
-            'spawn_video : {}'.format(
-                self.youtube.url,
-            )
-        )
-        for fmt in self.youtube.get_formats() :
-            logging.debug(f'spawn_video : format - {fmt}')
-        try :
-            title, video_url = self.youtube.video(self.max_height)
-        except ServiceError as e :
-            logging.warning(
-                '{} {}'.format(
-                    message,
-                    e
-                )
-            )
+        if self.youtube['error'] is not None :
+            logging.error(f"spawn_video : {message} {self.youtube['error']}")
             self.status_yt.config(text=message, background='orange')
             return
+        title = self.youtube.title
+        video_url = self.youtube['url']
+
+        logging.debug(f'spawn_video : url  - {self.youtube.url}')
+        logging.debug(f'spawn_video : _url - {self.youtube._url}')
+        logging.debug(f'spawn_video : format_sort - {self.youtube.format_sort}')
+        for fmt in self.youtube.get_formats() :
+            logging.debug(f'spawn_video : format      - {fmt}')
+        logging.debug(f'spawn_video : selected_formats - {self.youtube.selected_formats}')
+        logging.debug(f'spawn_video : video_url  - {video_url}')
+        logging.debug(f'spawn_video : title      - {title}')
+        logging.debug(f'spawn_video : resolution - {self.youtube.resolution}')
             
         self.status_yt.config(text=message, background='darkseagreen')            
+
         if self._native.get() :
             logging.debug(f'spawn_video : native - title = {title}')
             logging.debug(f'spawn_video : native - video_url = {video_url}')
@@ -379,6 +381,7 @@ class Application(tk.Tk, object) :
             logging.debug(f'spawn_video : built - built_url = {built_url}')
             logging.debug(f'spawn_video : built - video_url = {video_url}')
             video = Video(built_url, title)
+
         video.player = player
         proc = video.play()
         logging.info(f'spawn_video : play - player = {video.player.__class__.__name__}')
