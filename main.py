@@ -375,12 +375,12 @@ class Application(tk.Tk, object) :
         if self._native.get() :
             logging.debug(f'spawn_video : native - title = {title}')
             logging.debug(f'spawn_video : native - video_url = {video_url}')
-            video = Video(video_url, title)
+            video = Video(video_url, titre=title, filtre=self.format_sort)
         else :
             logging.debug(f'spawn_video : built - title = {title}')
             logging.debug(f'spawn_video : built - built_url = {built_url}')
             logging.debug(f'spawn_video : built - video_url = {video_url}')
-            video = Video(built_url, title)
+            video = Video(built_url, titre=title, filtre=self.format_sort)
 
         video.player = player
         proc = video.play()

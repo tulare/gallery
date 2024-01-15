@@ -12,10 +12,11 @@ from pk_services.players import MediaPlayer
         
 class Video(object) :
 
-    def __init__(self, uri, titre=None) :
-        self._player = None
-        self._titre = titre or uri
+    def __init__(self, uri, *, titre=None, filtre="hasvid") :
         self._uri = uri
+        self._titre = titre or uri
+        self._filtre = filtre
+        self._player = None
 
     @property
     def player(self) :
@@ -27,15 +28,13 @@ class Video(object) :
     def player(self, player) :
         self.change_player(player)
         
-            
-
     def change_player(self, player=None) :
-        if player is None :
-            self._player = MediaPlayer.getPlayer()
-        else :
-            self._player = MediaPlayer.getPlayer(player)
+        self._player = MediaPlayer(id=player or 'mpv', fmtsort=self._filtre)
         if Tor.isEnabled() :
-            self._player.add_options('--ytdl-raw-options=proxy=socks5://127.0.0.1:9150')
+            for index, option in enumerate(self._player.options) :
+                if option.startswith('--ytdl-raw-options') :
+                    self._player.options[index] += ",proxy=[socks5://127.0.0.1:9150]"
+            #self._player.add_options('--ytdl-raw-options=proxy=socks5://127.0.0.1:9150')
         log.debug(f'change_player - {self._player.id_player}:options{self._player.options}')
 
     def play(self) :
