@@ -7,8 +7,8 @@ lxml==5.1.0 ; python_version >= '3.6'
 mutagen==1.47.0 ; python_version >= '3.7'
 pillow==10.2.0
 -e git+https://github.com/tulare/pk-config@5875c9d792d052c372a048643c27ac3c887d2542#egg=pk-config
--e git+https://github.com/tulare/pk-services@8766cf7f3ef7949f451dfc6c92f8595d2c40445a#egg=pk-services
-pycryptodomex==3.19.1 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
+-e git+https://github.com/tulare/pk-services@216a6aa1ffeb66061f958c8caeb47f28cb6911bf#egg=pk-services
+pycryptodomex==3.20.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
 pysocks==1.7.1 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 requests==2.31.0 ; python_version >= '3.7'
 urllib3==2.1.0 ; python_version >= '3.8'

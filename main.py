@@ -384,11 +384,14 @@ class Application(tk.Tk, object) :
 
         video.player = player
         proc = video.play()
-        logging.info(f'spawn_video : play - player = {video.player.__class__.__name__}')
-        logging.info(f'spawn_video : play - pid = {proc.pid}')
-        logging.info(f'spawn_video : play - titre = {video._titre}')
-        logging.info(f'spawn_video : play - uri = {video._uri}')
-        
+        if proc is not None :
+            logging.info(f'spawn_video : play - player = {video.player.__class__.__name__}')
+            logging.info(f'spawn_video : play - pid = {proc.pid}')
+            logging.info(f'spawn_video : play - titre = {video._titre}')
+            logging.info(f'spawn_video : play - uri = {video._uri}')
+        else :
+            logging.error(f'spawn_video : fail - uri = {video._uri}')
+            self.status_yt.config(text=message, background='red')
 
 # ------------------------------------------------------------------------------
 
