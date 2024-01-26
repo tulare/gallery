@@ -20,6 +20,6 @@
 @GOTO :EOF
 
 :novenv
-@ECHO Erreur: l'environnement virtuel (.venv) n'est pas installé
+@ECHO Erreur: aucun environnement virtuel (.venv) n'est disponible
 
 @ENDLOCAL
