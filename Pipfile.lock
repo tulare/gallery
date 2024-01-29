@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8deb07cd9bb451c0528a090fab16c82be812ee2f94a977e73ce4822f33375f36"
+            "sha256": "5986c2e3ca63b90ba45fd98ebf6c425f70675e3c46d915ac8f1d5dbd49cd870c"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -390,7 +390,7 @@
         "pk-services": {
             "editable": true,
             "git": "https://github.com/tulare/pk-services",
-            "ref": "216a6aa1ffeb66061f958c8caeb47f28cb6911bf"
+            "ref": "7400a04c938604b438585b2192b0b4b8d53c62be"
         },
         "pycryptodomex": {
             "hashes": [
