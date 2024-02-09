@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
+
 # Logging
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
 import re
+import pathlib
+import subprocess
 import msvcrt
 import json
 import urllib.parse
@@ -96,6 +100,14 @@ class Page :
         return result
 
     @property
+    def imgbox_images(self) :
+        result = [
+            (index, f"{thumb.replace('thumbs','images').replace('_b.','_o.')}")
+            for index, thumb in enumerate(p.images_links)
+        ]
+        return result
+
+    @property
     def media_images_links(self) :
         parser = MediaHTMLParser()
         parser.parse(self.data)
@@ -137,6 +149,7 @@ class Page :
     def play_link(self, indice) :
         imlk = self.images_links
         play_link(list(imlk.values()), indice)
+
 
 # ------------------------------------------------------------------------------
 
@@ -180,6 +193,153 @@ def show_gallery(page=None) :
             gal.append(image, il[image])
 
     root.mainloop()
+
+# ------------------------------------------------------------------------------
+
+class CurlPage :
+
+    def __init__(self, url, *, encoding='utf-8', use_tor=False, outdir='.') :
+        self._encoding = encoding
+        self._use_tor = use_tor
+        self._outdir = outdir
+        self.url = url
+
+    def update(self) :
+        try :
+            self._page = curl_tree(self._url, encoding=self._encoding, use_tor=self._use_tor)
+        except OSError as e :
+            self._page = { 'data' : e }
+
+    @property
+    def url(self) :
+        return self._url
+
+    @url.setter
+    def url(self, url) :
+        self._url = url
+        self.update()
+
+    @property
+    def data(self) :
+        return self._page.get('data')
+
+    @property
+    def tree(self) :
+        return self._page.get('tree')
+
+    @property
+    def use_tor(self) :
+        return self._use_tor
+
+    @use_tor.setter
+    def use_tor(self, value) :
+        self._use_tor = bool(value)
+
+    @property
+    def box_title(self) :
+        return self.tree.xpath('//h1/text()')[0]
+
+    @property
+    def box_images(self) :
+        result = [
+            (index, f"{thumb.replace('thumbs','images').replace('_b.','_o.')}")
+            for index, thumb in enumerate(self.tree.xpath("//a[descendant::img]/descendant::img/@src"))
+        ]
+        return result
+
+
+    def box_download(self, image) :
+        try :
+            indice, url_image = image
+            curl_download(url_image, outdir=self._outdir, filename=f"{indice:03d}", use_tor=self.use_tor)
+        except IndexError as e :
+            logging.error(e)
+            return
+        except OSError as e :
+            logging.error(e)
+            return
+
+    @property
+    def bam_images(self) :
+        bam_data = ''.join(self.tree.xpath("//input[contains(@value,'alt=')]/@value"))
+        bam_tree = lxml.etree.HTML(bam_data)
+        result = list()
+        for image in bam_tree.xpath('//a[descendant::img[@alt!=""]]') :
+            index = image.xpath('img/@alt')[0]
+            result.append((index, image.attrib['href']))
+        return result
+
+    def bam_download(self, image) :
+        try :
+            nom_image, url_image = image
+            page = curl_tree(url_image, encoding=self._encoding, use_tor=self.use_tor, cookie='nsfw_inter=1')
+            url_download = page['tree'].xpath(f'//img[@alt="{nom_image}"]/@src')[0]
+            logging.debug(url_download)
+            curl_download(url_download, outdir=self._outdir, filename=nom_image, use_tor=self.use_tor)
+        except IndexError as e :
+            logging.error(e)
+            return
+        except OSError as e :
+            logging.error(e)
+            return
+        
+# ------------------------------------------------------------------------------
+
+def curl_tree(url, *, encoding='utf-8', use_tor=False, cookie=None) :
+
+    # contruire la commande url
+    curl_command = [ 'curl', '--ssl-no-revoke' ]
+    if cookie is not None :
+        curl_command.extend(['--cookie', cookie])
+    if use_tor :
+        curl_command.extend(['--socks5-hostname', 'localhost:9150'])
+    curl_command.extend([f'{url}'])
+    logging.debug(curl_command)
+
+    try :
+        data = subprocess.check_output(curl_command, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e :
+        logging.error(e)
+        raise OSError(e)
+
+    return {
+        'url' : url,
+        'data' : data.decode(encoding),
+        'tree' : lxml.etree.HTML(data)
+    }
+
+# ------------------------------------------------------------------------------
+
+def curl_download(url, outdir='.', filename=None, use_tor=False) :
+
+    # chemin relatif url
+    url_path = pathlib.Path(urllib.parse.urlparse(url).path)
+
+    # répertoire de sortie
+    output_dir = pathlib.Path(outdir)
+    if not output_dir.exists() :
+        output_dir.mkdir()
+    elif not output_dir.is_dir() :
+        raise OSError(f"{output_dir} existe mais ce n'est pas un répertoire")
+
+    # fichier de sortie
+    output_file = output_dir / url_path.name
+    if filename is not None :
+        filename = pathlib.Path(filename)
+        output_file = output_file.with_name(f'{filename.stem}_{url_path.name}')
+    
+    # construire la commande curl
+    curl_command = [ 'curl', '--ssl-no-revoke' ]
+    if use_tor :
+        curl_command.extend(['--socks5-hostname', 'localhost:9150'])
+    curl_command.extend([f'{url}', '--output', f'{output_file}'])
+    logging.debug(curl_command)
+
+    # exécuter la commande
+    try :
+        subprocess.check_call(curl_command)
+    except subprocess.CalledProcessError as e :
+        raise OSError(e)
 
 # ------------------------------------------------------------------------------
 
