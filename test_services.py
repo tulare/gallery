@@ -25,7 +25,9 @@ from pk_services.parsers import DomainParserConfig, CharsetHTMLParser, ImageLink
 from pk_services.web import WebService, GrabService
 from pk_services.youtube import YoutubeService
 from pk_services.players import MediaPlayer
+
 from helpers.video import Video
+from helpers.curl import CurlEngine, PageHTML, site_url, force_https
 
 def importDomainsTo(conf) :
     dp = DomainParserConfig()
@@ -198,17 +200,20 @@ def show_gallery(page=None) :
 
 class CurlPage :
 
-    def __init__(self, url, *, encoding='utf-8', use_tor=False, outdir='.') :
-        self._encoding = encoding
-        self._use_tor = use_tor
-        self._outdir = outdir
+    def __init__(self, url, *, use_tor=False, circuit=None, outdir='.') :
+        self._curl = CurlEngine(use_tor=use_tor, circuit=circuit)
+        self.outdir = outdir
         self.url = url
 
     def update(self) :
         try :
-            self._page = curl_tree(self._url, encoding=self._encoding, use_tor=self._use_tor)
+            self._page = self.curl.load(self._url)
         except OSError as e :
-            self._page = { 'data' : e }
+            self._page = PageHTML({ 'source' : e })
+
+    @property
+    def curl(self) :
+        return self._curl
 
     @property
     def url(self) :
@@ -220,47 +225,47 @@ class CurlPage :
         self.update()
 
     @property
-    def data(self) :
-        return self._page.get('data')
+    def outdir(self) :
+        return self._outdir
+
+    @outdir.setter
+    def outdir(self, outdir) :
+        self._outdir = pathlib.Path(outdir)
+
+    @property
+    def site(self) :
+        return site_url(self.url)
+
+    @property
+    def source(self) :
+        return self._page.source
 
     @property
     def tree(self) :
-        return self._page.get('tree')
+        return self._page.tree
 
     @property
-    def use_tor(self) :
-        return self._use_tor
-
-    @use_tor.setter
-    def use_tor(self, value) :
-        self._use_tor = bool(value)
-
-    @property
-    def box_title(self) :
+    def ibox_title(self) :
         return self.tree.xpath('//h1/text()')[0]
 
     @property
-    def box_images(self) :
+    def ibox_images(self) :
         result = [
-            (index, f"{thumb.replace('thumbs','images').replace('_b.','_o.')}")
-            for index, thumb in enumerate(self.tree.xpath("//a[descendant::img]/descendant::img/@src"))
+            (f"{index:03d}", urllib.parse.urljoin(self.url, thumb))
+             for index, thumb in enumerate(self.tree.xpath("//a[img[@src]]/@href"))
         ]
         return result
 
-
-    def box_download(self, image) :
-        try :
-            indice, url_image = image
-            curl_download(url_image, outdir=self._outdir, filename=f"{indice:03d}", use_tor=self.use_tor)
-        except IndexError as e :
-            logging.error(e)
-            return
-        except OSError as e :
-            logging.error(e)
-            return
+    @property
+    def icloud_images(self) :
+        result = [
+            (f"{index:03d}", urllib.parse.urljoin(self.url, thumb))
+             for index, thumb in enumerate(self.tree.xpath("//a[img[@src]]/@href"))
+        ]
+        return result
 
     @property
-    def bam_images(self) :
+    def ibam_images(self) :
         bam_data = ''.join(self.tree.xpath("//input[contains(@value,'alt=')]/@value"))
         bam_tree = lxml.etree.HTML(bam_data)
         result = list()
@@ -269,78 +274,55 @@ class CurlPage :
             result.append((index, image.attrib['href']))
         return result
 
-    def bam_download(self, image) :
+    @property
+    def erop_images(self) :
+        result = [
+            (f"{(index+1):03d}", force_https(urllib.parse.urljoin(self.url, thumb)))
+            for index, thumb in enumerate(self.tree.xpath('//a[img][@target="_blank"]/@href'))
+        ]
+        return result
+
+    def download(self, image) :
+        nom_image, url_image = image
+
+        # gestion des cookies ?
+        if site_url(url_image) in ('www.imagebam.com', ) :
+            self.curl.cookie = 'nsfw_inter=1'
+        else :
+            self.curl.cookie = None
+        logging.debug(f"{nom_image}, {url_image}")
+
+        # récupération url et téléchargement
         try :
-            nom_image, url_image = image
-            page = curl_tree(url_image, encoding=self._encoding, use_tor=self.use_tor, cookie='nsfw_inter=1')
-            url_download = page['tree'].xpath(f'//img[@alt="{nom_image}"]/@src')[0]
-            logging.debug(url_download)
-            curl_download(url_download, outdir=self._outdir, filename=nom_image, use_tor=self.use_tor)
-        except IndexError as e :
-            logging.error(e)
-            return
+            page = self.curl.load(url_image)
+            url_download = self.resolve_url(page)
+            self.curl.download(url_download, outdir=self.outdir, filename=nom_image)
         except OSError as e :
             logging.error(e)
             return
+
+    def resolve_url(self, page) :
+        site = urllib.parse.urlparse(page.url).netloc
+        logging.debug(f'site: {site}')
+        if site in ('imgcloud.pw', 'imgbox.com', 'www.turboimagehost.com', ) :
+            url_download = page.tree.xpath("//meta[@property='og:image']/@content")
+        elif site in ('www.imagebam.com', ) :
+            url_download = page.tree.xpath("//img[contains(@class,'main-image')]/@src")
+        elif site in ('pixhost.to', ) :
+            url_download = page.tree.xpath("//img[@id='image']/@src")
+        elif site in ('postimg.cc', ) :
+            url_download = page.tree.xpath("//a[@id='download']/@href")
+        else :
+            raise OSError(f"site error: {site}")
+
+        try :
+            url_download = force_https(url_download[0])
+            logging.debug(url_download)
+        except IndexError as e :
+            raise OSError(e)
+
+        return url_download
         
-# ------------------------------------------------------------------------------
-
-def curl_tree(url, *, encoding='utf-8', use_tor=False, cookie=None) :
-
-    # contruire la commande url
-    curl_command = [ 'curl', '--ssl-no-revoke' ]
-    if cookie is not None :
-        curl_command.extend(['--cookie', cookie])
-    if use_tor :
-        curl_command.extend(['--socks5-hostname', 'localhost:9150'])
-    curl_command.extend([f'{url}'])
-    logging.debug(curl_command)
-
-    try :
-        data = subprocess.check_output(curl_command, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError as e :
-        logging.error(e)
-        raise OSError(e)
-
-    return {
-        'url' : url,
-        'data' : data.decode(encoding),
-        'tree' : lxml.etree.HTML(data)
-    }
-
-# ------------------------------------------------------------------------------
-
-def curl_download(url, outdir='.', filename=None, use_tor=False) :
-
-    # chemin relatif url
-    url_path = pathlib.Path(urllib.parse.urlparse(url).path)
-
-    # répertoire de sortie
-    output_dir = pathlib.Path(outdir)
-    if not output_dir.exists() :
-        output_dir.mkdir()
-    elif not output_dir.is_dir() :
-        raise OSError(f"{output_dir} existe mais ce n'est pas un répertoire")
-
-    # fichier de sortie
-    output_file = output_dir / url_path.name
-    if filename is not None :
-        filename = pathlib.Path(filename)
-        output_file = output_file.with_name(f'{filename.stem}_{url_path.name}')
-    
-    # construire la commande curl
-    curl_command = [ 'curl', '--ssl-no-revoke' ]
-    if use_tor :
-        curl_command.extend(['--socks5-hostname', 'localhost:9150'])
-    curl_command.extend([f'{url}', '--output', f'{output_file}'])
-    logging.debug(curl_command)
-
-    # exécuter la commande
-    try :
-        subprocess.check_call(curl_command)
-    except subprocess.CalledProcessError as e :
-        raise OSError(e)
-
 # ------------------------------------------------------------------------------
 
 if __name__ == "__main__" :
