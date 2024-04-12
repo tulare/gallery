@@ -48,7 +48,7 @@ class Video(object) :
     def ytdl_raw_options(self) :
         self.player.mpv_options.set_raw_options('format-sort', self.filtre)
         if Tor.isEnabled() :
-            self.player.mpv_options.set_raw_options('proxy', 'socks5://127.0.0.1:9150')
+            self.player.mpv_options.set_raw_options('proxy', 'socks5h://127.0.0.1:9150')
         else :
             self.player.mpv_options.clear_raw_options('proxy')
             

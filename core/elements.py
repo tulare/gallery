@@ -179,7 +179,7 @@ class Image(ImageBase) :
                 try :
                     #image_bytes = self.webRequest(self.source).content
                     image_web = self.webRequest(self.source)
-                    image_bytes = self.webRequest(self.source).read()
+                    image_bytes = self.webRequest(self.source).content
                     self._image = PIL.Image.open(BytesIO(image_bytes))
                 except (ServiceError, OSError) as e :
                     self._image = self._error(repr(e))

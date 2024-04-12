@@ -59,7 +59,7 @@ class Page :
     def url_charge(self, url) :
         ws = WebService()
         ws.user_agent = conf.get('User-Agent')
-        req = ws.opener.open(url)
+        req = ws.get(url)
         bindata = req.read()
         charset_parser = CharsetHTMLParser()
         charset_parser.parse(bindata)
