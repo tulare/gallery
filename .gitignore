@@ -1,5 +1,6 @@
 # project specific configuration
 *config.db
+pipenv*.cmd
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
