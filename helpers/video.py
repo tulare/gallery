@@ -37,21 +37,26 @@ class Video(object) :
     @filtre.setter
     def filtre(self, filtre) :
         self._filtre = filtre
-        if self._player is not None :
-            self._player.mpv_options.set_raw_options('format-sort', self._filtre)
+        self.ytdl_raw_options()
         
     def change_player(self, player=None) :
         self._player = MediaPlayer(id=player or 'mpv')
         self.ytdl_raw_options()
-        log.debug(f'change_player - {self.player.id_player}:options{self.player.mpv_options.options}')
-
+        log.debug(f'change_player - {self.player.id_player}:options{self.player.options}')
+        
     def ytdl_raw_options(self) :
+        if not hasattr(self.player, 'mpv_options') :
+            log.debug(f'ytdl_raw_options - no mpv_options')
+            return False
+
         self.player.mpv_options.set_raw_options('format-sort', self.filtre)
         if Tor.isEnabled() :
             self.player.mpv_options.set_raw_options('proxy', 'socks5h://127.0.0.1:9150')
         else :
             self.player.mpv_options.clear_raw_options('proxy')
-            
+
+        return True
+    
     def play(self) :
         self.ytdl_raw_options()
         process = self.player.play(self._titre, self._uri)
@@ -65,7 +70,7 @@ class Video(object) :
         except TimeoutExpired :
             pass
         log.debug(f'play - {self.player.id_player}:console={self.player.console}')
-        log.debug(f'play - {self.player.id_player}:options{self.player.mpv_options.options}')
+        log.debug(f'play - {self.player.id_player}:options{self.player.options}')
         log.debug(f'play - process:{process.pid}')
 
         return process
