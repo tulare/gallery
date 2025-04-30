@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ca2a5d2a2054f6d5867b729c53b5e030d9745e6579cb23f8fa85c5b23a4cdb78"
+            "sha256": "3b0e707f61c4afeca70fd50d390b85a14e77a6faad05e3106f82e4c0f69d4dee"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -16,11 +16,11 @@
     "default": {
         "certifi": {
             "hashes": [
-                "sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651",
-                "sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe"
+                "sha256:0a816057ea3cdefcef70270d2c515e4506bbc954f417fa5ade2021213bb8f0c6",
+                "sha256:30350364dfe371162649852c63336a15c70c6510c2ad5015b21c2345311805f3"
             ],
             "markers": "python_version >= '3.6'",
-            "version": "==2025.1.31"
+            "version": "==2025.4.26"
         },
         "charset-normalizer": {
             "hashes": [
@@ -354,7 +354,7 @@
         "pk-config": {
             "editable": true,
             "git": "https://github.com/tulare/pk-config",
-            "ref": "aefcf69865a825344206da3bc9dcbafc86474cda"
+            "ref": "c512a9acde71fd7ed424c600cccdb5d32fad6a28"
         },
         "pk-services": {
             "editable": true,
