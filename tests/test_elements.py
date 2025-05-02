@@ -1,39 +1,55 @@
 # -*- encoding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    print_function, division,
-    unicode_literals
-)
+
+import unittest
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
-
-try :
-    import context
-except ImportError :
-    from . import context
-
-try :
-    import tkinter as tk
-    import tkinter.ttk as ttk
-except ImportError :
-    import Tkinter as tk
-    import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 
 import core.elements
 import widgets.images
 
-i = core.elements.Image('C:/Users/Public/Pictures/Sample Pictures/Lighthouse.jpg')
-j = core.elements.Image('https://dummyimage.com/640x480')
+from . import locator
 
-root = tk.Tk()
+# ---
 
-label1 = widgets.images.ImageLabel(root, image=i)
-label1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+class Test_00_elements(unittest.TestCase) :
 
-label2 = widgets.images.ImageLabel(root)
-label2.image = j
-label2.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+    def setUp(self) :
+        self.i = core.elements.Image(f'{locator.location}/samples/640x480.jpg')
+        self.j = core.elements.Image('https://dummyimage.com/640x480/fff/00f')
 
-root.mainloop()
+    def tearDown(self):
+        self.i.image.close()
+        self.j.image.close()
+    
+    def test_00_Trivial(self) :
+        assert True, 'True basic trivial test'
+
+    def test_01_Widgets(self) :
+        assert show_widgets(self.i, self.j), 'show widgets'
+        #assert True, 'Widgets'
+
+# ---
+
+def show_widgets(i, j) :
+
+    root = tk.Tk()
+    label1 = widgets.images.ImageLabel(root, image=i)
+    label1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    label2 = widgets.images.ImageLabel(root)
+    label2.image = j
+    label2.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+    root.after(2500, root.destroy)
+    
+    root.mainloop()
+    
+    return True
+
+# ---
+
+if __name__ == '__main__' :
+    unittest.main()
     

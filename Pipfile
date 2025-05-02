@@ -5,11 +5,12 @@ name = "pypi"
 
 [packages]
 pillow = "*"
-pk-config = {editable = true, ref = "v0.1.5", git = "https://github.com/tulare/pk-config"}
-pk-services = {editable = true, ref = "v0.1.15", git = "https://github.com/tulare/pk-services"}
-yt-dlp = ">=2024.7.2"
+pk-config = {ref = "v0.1.6", git = "https://github.com/tulare/pk-config"}
+pk-services = {ref = "v0.1.16", git = "https://github.com/tulare/pk-services"}
 
 [dev-packages]
 pyreadline3 = "*"
+nose2 = "*"
 
 [requires]
+python_version = "3.12"
