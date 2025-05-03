@@ -1,10 +1,12 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "403ddb1475d9a07643119a25f9d54284a43e298b69d2b87798540a0d5f8c9bee"
+            "sha256": "168713dcfbc26e95583be06cec583970be5ea7d2b4452bc684189a18a7b6c669"
         },
         "pipfile-spec": 6,
-        "requires": {},
+        "requires": {
+            "python_version": "3.12"
+        },
         "sources": [
             {
                 "name": "pypi",
@@ -353,7 +355,7 @@
         },
         "pk-config": {
             "git": "https://github.com/tulare/pk-config",
-            "ref": "0bf9a39c6059933d6a80c6fd491c2565a7709edb"
+            "ref": "a09bad2746da47c80279fc5af24fa944eed31bfc"
         },
         "pk-services": {
             "git": "https://github.com/tulare/pk-services",
