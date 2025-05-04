@@ -1,27 +1,14 @@
-# -*- encoding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    print_function, division
-)
+# -*- coding: utf-8 -*-
 
 # logging
 import logging
 log = logging.getLogger(__name__)
 log.debug('MODULE {}'.format(__name__))
 
-##try :
-##    import __locator__
-##except ImportError :
-##    pass
-
 import copy
 
-try : # python 3.x
-    import tkinter as tk
-    import tkinter.ttk as ttk
-except ImportError :
-    import Tkinter as tk
-    import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 
 import core.elements
 import widgets.images

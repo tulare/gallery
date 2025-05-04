@@ -1,31 +1,16 @@
-# -*- encoding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    print_function, division,
-    unicode_literals,
-)
+# -*- coding: utf-8 -*-
 
 # logging
 import logging
 log = logging.getLogger(__name__)
 log.debug('MODULE {}'.format(__name__))
 
-##try :
-##    import __locator__
-##except ImportError :
-##    pass
-
 import weakref
-
-try : # python 3.x
-    import tkinter as tk
-    import tkinter.ttk as ttk
-except ImportError : # python 2.x
-    import Tkinter as tk
-    import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
     
 import core.elements
-from helpers.observer import IObserver
+from pk_config.patterns.observer import IObserver
 
 # -------------------------------------------------------------------------
 
@@ -71,7 +56,7 @@ class ImageLabel(ttk.Label, IObserver) :
             self._image = weakref.ref(image)
 
         if self.image is not None and alive :
-            self.image.addObserver(self)
+            self.image.add_observer(self)
             self._update()
 
     def _update(self) :
@@ -140,7 +125,7 @@ class ImageCanvas(IObserver) :
         
 
         if self.image is not None and alive :
-            self.image.addObserver(self)
+            self.image.add_observer(self)
             self._update()
 
         self.debug('@IMAGE.SETTER', id=self.id, new=image, old=self.image, alive=alive)

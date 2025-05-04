@@ -1,9 +1,4 @@
-# -*- encoding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    print_function, division,
-    unicode_literals
-)
+# -*- coding: utf-8 -*-
 
 # logging
 import logging
@@ -20,7 +15,7 @@ from io import BytesIO
 
 from pk_services.exceptions import ServiceError
 from pk_services.web import WebRequest
-from helpers.observer import Observable
+from pk_config.patterns.observer import Observable
 
 # --------------------------------------------------------------------
 

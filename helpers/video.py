@@ -1,4 +1,4 @@
-__all__ = [ 'Video' ]
+# -*- coding: utf-8 -*-
 
 # logging
 import logging
@@ -9,6 +9,8 @@ from subprocess import TimeoutExpired
 
 from pk_services.core import Tor
 from pk_services.players import MediaPlayer
+
+__all__ = [ 'Video' ]
         
 # --------------------------------------------------------------------
         
