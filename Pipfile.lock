@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "168713dcfbc26e95583be06cec583970be5ea7d2b4452bc684189a18a7b6c669"
+            "sha256": "57815569f47c08045229d4f536819965ff45547fdb457cce6da6b0e64e92640f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -355,7 +355,7 @@
         },
         "pk-config": {
             "git": "https://github.com/tulare/pk-config",
-            "ref": "a09bad2746da47c80279fc5af24fa944eed31bfc"
+            "ref": "316a9aca89a58acbc764fdb0d4f17d0d0265523e"
         },
         "pk-services": {
             "git": "https://github.com/tulare/pk-services",
