@@ -4,9 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pillow = "*"
 pk-config = {ref = "v0.1.8", git = "https://github.com/tulare/pk-config"}
 pk-services = {ref = "v0.1.16", git = "https://github.com/tulare/pk-services"}
+pillow = "*"
 
 [dev-packages]
 pyreadline3 = "*"
